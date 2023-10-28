@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/blazee5/testhub-backend/internal/domain"
-	userService "github.com/blazee5/testhub-backend/internal/user/service"
+	"github.com/blazee5/testhub-backend/internal/user"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
@@ -10,10 +10,10 @@ import (
 
 type Handler struct {
 	log     *zap.SugaredLogger
-	service *userService.Service
+	service user.Service
 }
 
-func NewHandler(log *zap.SugaredLogger, service *userService.Service) *Handler {
+func NewHandler(log *zap.SugaredLogger, service user.Service) *Handler {
 	return &Handler{log: log, service: service}
 }
 

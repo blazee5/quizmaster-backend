@@ -23,7 +23,6 @@ func main() {
 	db := postgres.New()
 
 	e := echo.New()
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	e.Validator = libValidator.NewValidator(validator.New())
