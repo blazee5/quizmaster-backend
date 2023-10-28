@@ -9,17 +9,17 @@ import (
 
 const (
 	signingKey = "7!qK&5pTg#r*Fz$@9W"
-	tokenTTL   = 72 * time.Hour
+	tokenTTL   = time.Hour * 72
 	salt       = "Xy@6#L9*Z!q2r$Pc"
 )
 
-type tokenClaims struct {
+type TokenClaims struct {
 	jwt.RegisteredClaims
 	UserId int `json:"user_id"`
 }
 
 func GenerateToken(userId int) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &TokenClaims{
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -31,7 +31,7 @@ func GenerateToken(userId int) (string, error) {
 }
 
 func ParseToken(token string) (int, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(signingKey), nil
 	})
 
@@ -39,7 +39,7 @@ func ParseToken(token string) (int, error) {
 		return 0, err
 	}
 
-	claims, ok := parsedToken.Claims.(*tokenClaims)
+	claims, ok := parsedToken.Claims.(*TokenClaims)
 	if !ok {
 		return 0, err
 	}

@@ -4,6 +4,9 @@ import (
 	authHandler "github.com/blazee5/testhub-backend/internal/auth/handler"
 	authRepo "github.com/blazee5/testhub-backend/internal/auth/repository"
 	authService "github.com/blazee5/testhub-backend/internal/auth/service"
+	userHandler "github.com/blazee5/testhub-backend/internal/user/handler"
+	userRepo "github.com/blazee5/testhub-backend/internal/user/repository"
+	userService "github.com/blazee5/testhub-backend/internal/user/service"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -28,4 +31,17 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		auth.POST("/signup", authHandlers.SignUp)
 		auth.POST("/signin", authHandlers.SignIn)
 	}
+
+	userRepos := userRepo.NewRepository(s.db)
+	userServices := userService.NewService(userRepos)
+	userHandlers := userHandler.NewHandler(s.log, userServices)
+
+	user := e.Group("/user", AuthMiddleware)
+	{
+		user.GET("/me", userHandlers.GetMe)
+		user.PUT("/", userHandlers.UpdateMe)
+		user.DELETE("/", userHandlers.DeleteMe)
+	}
+
+	e.Static("/public", "public")
 }
