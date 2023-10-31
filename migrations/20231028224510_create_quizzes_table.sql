@@ -5,7 +5,7 @@ CREATE TABLE quizzes(
     title VARCHAR(255) NOT NULL,
     description TEXT,
     user_id int NOT NULL,
-    created_at DATE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- +goose StatementEnd
 

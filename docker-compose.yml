@@ -1,0 +1,10 @@
+services:
+  server:
+    image: .
+    ports:
+      - "3000:3000"
+
+  postgresql:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
