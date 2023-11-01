@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -25,6 +26,10 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
 
