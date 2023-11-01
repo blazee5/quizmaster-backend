@@ -22,6 +22,19 @@ func NewHandler(log *zap.SugaredLogger, service quiz.Service) *Handler {
 	return &Handler{log: log, service: service}
 }
 
+func (h *Handler) GetAllQuizzes(c echo.Context) error {
+	quizzes, err := h.service.GetAll(c.Request().Context())
+
+	if err != nil {
+		h.log.Infof("error while get all quizzes: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, quizzes)
+}
+
 func (h *Handler) GetQuiz(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -148,4 +161,31 @@ func (h *Handler) SaveResult(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"correct_answers": result,
 	})
+}
+
+func (h *Handler) DeleteQuiz(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	err = h.service.Delete(c.Request().Context(), id)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while delete quiz: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "sucess")
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/models"
 	"github.com/jmoiron/sqlx"
@@ -13,6 +14,18 @@ type Repository struct {
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
+}
+
+func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
+	var quizzes []models.Quiz
+
+	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return quizzes, nil
 }
 
 func (repo *Repository) Create(ctx context.Context, input domain.Quiz) (int, error) {
@@ -159,4 +172,24 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, input domain
 	}
 
 	return result, nil
+}
+
+func (repo *Repository) Delete(ctx context.Context, id int) error {
+	res, err := repo.db.ExecContext(ctx, "DELETE FROM quizzes WHERE id = $1", id)
+
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if rows < 1 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
