@@ -1,9 +1,9 @@
 package domain
 
 type Quiz struct {
-	Title       string `json:"title" validate:"required"`
-	Description string `json:"description" validate:"required"`
-	Image       string `json:"image"`
+	Title       string `form:"title" validate:"required"`
+	Description string `form:"description" validate:"required"`
+	Image       string `form:"image"`
 	UserId      int
-	Questions   []Question `json:"questions" validate:"required"`
+	Questions   []Question `form:"questions" validate:"required"`
 }

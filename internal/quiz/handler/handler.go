@@ -112,5 +112,40 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 }
 
 func (h *Handler) SaveResult(c echo.Context) error {
-	return c.JSON(http.StatusOK, "")
+	var input domain.Result
+
+	userId := c.Get("userId").(int)
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	result, err := h.service.SaveResult(c.Request().Context(), userId, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while save results: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"correct_answers": result,
+	})
 }

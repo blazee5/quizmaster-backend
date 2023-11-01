@@ -76,7 +76,7 @@ func (repo *Repository) GetById(ctx context.Context, id int) (models.Quiz, error
 	return quiz, nil
 }
 
-func (repo *Repository) GetQuestionsById(ctx context.Context, id int) ([]models.Question, error) {
+func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error) {
 	var questions []models.Question
 
 	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
@@ -84,14 +84,27 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int) ([]models.
 	}
 
 	var answers []models.Answer
-	if err := repo.db.SelectContext(ctx, &answers, `
+
+	query := `
         SELECT id, text, question_id
         FROM answers
         WHERE question_id IN (
             SELECT id
             FROM questions
             WHERE quiz_id = $1
-        )`, id); err != nil {
+        )`
+	if includeIsCorrect {
+		query = `
+        SELECT id, text, question_id, is_correct
+        FROM answers
+        WHERE question_id IN (
+            SELECT id
+            FROM questions
+            WHERE quiz_id = $1
+        )`
+	}
+
+	if err := repo.db.SelectContext(ctx, &answers, query, id); err != nil {
 		return nil, err
 	}
 
@@ -104,4 +117,46 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int) ([]models.
 	}
 
 	return questions, nil
+}
+
+func (repo *Repository) SaveResult(ctx context.Context, userId int, input domain.Result) (int, error) {
+	tx, err := repo.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	insertResultQuery := `
+		INSERT INTO results (user_id, quiz_id, question_id, answer_id, is_correct)
+		VALUES ($1, $2, $3, $4, $5)`
+	selectAnswerQuery := `SELECT is_correct FROM answers WHERE id = $1`
+
+	var result int
+
+	for k, answerIds := range input.Answers {
+		for _, answerId := range answerIds {
+			var isCorrect bool
+			err := tx.QueryRowContext(ctx, selectAnswerQuery, answerId).Scan(&isCorrect)
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+
+			_, err = tx.ExecContext(ctx, insertResultQuery, userId, input.QuizId, k, answerId, isCorrect)
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+
+			if isCorrect {
+				result++
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return result, nil
 }

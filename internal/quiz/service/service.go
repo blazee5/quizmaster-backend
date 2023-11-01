@@ -24,5 +24,9 @@ func (s *Service) GetById(ctx context.Context, id int) (models.Quiz, error) {
 }
 
 func (s *Service) GetQuestionsById(ctx context.Context, id int) ([]models.Question, error) {
-	return s.repo.GetQuestionsById(ctx, id)
+	return s.repo.GetQuestionsById(ctx, id, false)
+}
+
+func (s *Service) SaveResult(ctx context.Context, userId int, input domain.Result) (int, error) {
+	return s.repo.SaveResult(ctx, userId, input)
 }
