@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE user_answers(
+CREATE TABLE results(
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     quiz_id INT NOT NULL,
@@ -12,5 +12,5 @@ CREATE TABLE user_answers(
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE user_answers;
+DROP TABLE results;
 -- +goose StatementEnd

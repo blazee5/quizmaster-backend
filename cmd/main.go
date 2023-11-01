@@ -24,6 +24,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
 
 	e.Validator = libValidator.NewValidator(validator.New())
 

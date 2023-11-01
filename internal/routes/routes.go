@@ -4,6 +4,9 @@ import (
 	authHandler "github.com/blazee5/testhub-backend/internal/auth/handler"
 	authRepo "github.com/blazee5/testhub-backend/internal/auth/repository"
 	authService "github.com/blazee5/testhub-backend/internal/auth/service"
+	quizHandler "github.com/blazee5/testhub-backend/internal/quiz/handler"
+	quizRepo "github.com/blazee5/testhub-backend/internal/quiz/repository"
+	quizService "github.com/blazee5/testhub-backend/internal/quiz/service"
 	userHandler "github.com/blazee5/testhub-backend/internal/user/handler"
 	userRepo "github.com/blazee5/testhub-backend/internal/user/repository"
 	userService "github.com/blazee5/testhub-backend/internal/user/service"
@@ -32,15 +35,30 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		auth.POST("/signin", authHandlers.SignIn)
 	}
 
-	userRepos := userRepo.NewRepository(s.db)
-	userServices := userService.NewService(userRepos)
-	userHandlers := userHandler.NewHandler(s.log, userServices)
-
-	user := e.Group("/user", AuthMiddleware)
+	api := e.Group("/api")
 	{
-		user.GET("/me", userHandlers.GetMe)
-		user.PUT("/", userHandlers.UpdateMe)
-		user.DELETE("/", userHandlers.DeleteMe)
+		userRepos := userRepo.NewRepository(s.db)
+		userServices := userService.NewService(userRepos)
+		userHandlers := userHandler.NewHandler(s.log, userServices)
+
+		user := api.Group("/user", AuthMiddleware)
+		{
+			user.GET("/me", userHandlers.GetMe)
+			user.PUT("/", userHandlers.UpdateMe)
+			user.DELETE("/", userHandlers.DeleteMe)
+		}
+
+		quizRepos := quizRepo.NewRepository(s.db)
+		quizServices := quizService.NewService(quizRepos)
+		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
+
+		quiz := e.Group("/quiz")
+		{
+			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
+			quiz.POST("/save", quizHandlers.SaveResult, AuthMiddleware)
+			quiz.GET("/:id", quizHandlers.GetQuiz)
+			quiz.GET("/:id/questions", quizHandlers.GetQuizQuestions)
+		}
 	}
 
 	e.Static("/public", "public")
