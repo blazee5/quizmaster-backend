@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/quiz"
+	"github.com/blazee5/testhub-backend/lib/http_errors"
 	"github.com/blazee5/testhub-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -128,6 +129,13 @@ func (h *Handler) SaveResult(c echo.Context) error {
 	var input domain.Result
 
 	userId := c.Get("userId").(int)
+	quizId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid quiz id",
+		})
+	}
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -143,7 +151,7 @@ func (h *Handler) SaveResult(c echo.Context) error {
 		})
 	}
 
-	result, err := h.service.SaveResult(c.Request().Context(), userId, input)
+	result, err := h.service.SaveResult(c.Request().Context(), userId, quizId, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -165,6 +173,7 @@ func (h *Handler) SaveResult(c echo.Context) error {
 
 func (h *Handler) DeleteQuiz(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
+	userId := c.Get("userId").(int)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -172,11 +181,17 @@ func (h *Handler) DeleteQuiz(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Delete(c.Request().Context(), id)
+	err = h.service.Delete(c.Request().Context(), userId, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
 			"message": "quiz not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
 		})
 	}
 

@@ -59,10 +59,10 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		{
 			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
 			quiz.GET("", quizHandlers.GetAllQuizzes)
-			quiz.POST("/save", quizHandlers.SaveResult, AuthMiddleware)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
-			quiz.GET("/:id/questions", quizHandlers.GetQuizQuestions)
-			quiz.DELETE("/:id", quizHandlers.DeleteQuiz)
+			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
+			quiz.GET("/:id/questions", quizHandlers.GetQuizQuestions, AuthMiddleware)
+			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
 		}
 	}
 

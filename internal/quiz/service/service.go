@@ -5,6 +5,7 @@ import (
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/models"
 	"github.com/blazee5/testhub-backend/internal/quiz"
+	"github.com/blazee5/testhub-backend/lib/http_errors"
 	"go.uber.org/zap"
 	"strconv"
 )
@@ -55,10 +56,26 @@ func (s *Service) GetQuestionsById(ctx context.Context, id int) ([]models.Questi
 	return s.repo.GetQuestionsById(ctx, id, false)
 }
 
-func (s *Service) SaveResult(ctx context.Context, userId int, input domain.Result) (int, error) {
-	return s.repo.SaveResult(ctx, userId, input)
+func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input domain.Result) (int, error) {
+	_, err := s.repo.GetById(ctx, quizId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return s.repo.SaveResult(ctx, userId, quizId, input)
 }
 
-func (s *Service) Delete(ctx context.Context, id int) error {
-	return s.repo.Delete(ctx, id)
+func (s *Service) Delete(ctx context.Context, userId, quizId int) error {
+	quiz, err := s.repo.GetById(ctx, quizId)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.Id != userId {
+		return http_errors.PermissionDenied
+	}
+
+	return s.repo.Delete(ctx, quizId)
 }

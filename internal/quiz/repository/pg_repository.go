@@ -132,7 +132,7 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 	return questions, nil
 }
 
-func (repo *Repository) SaveResult(ctx context.Context, userId int, input domain.Result) (int, error) {
+func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, input domain.Result) (int, error) {
 	tx, err := repo.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -165,7 +165,7 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, input domain
 				return 0, err
 			}
 
-			_, err = tx.ExecContext(ctx, insertResultQuery, userId, input.QuizId, questionId, answerId, isCorrect)
+			_, err = tx.ExecContext(ctx, insertResultQuery, userId, quizId, questionId, answerId, isCorrect)
 			if err != nil {
 				tx.Rollback()
 				return 0, err

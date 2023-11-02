@@ -11,6 +11,6 @@ type Service interface {
 	GetAll(ctx context.Context) ([]models.Quiz, error)
 	GetById(ctx context.Context, id int) (models.Quiz, error)
 	GetQuestionsById(ctx context.Context, id int) ([]models.Question, error)
-	SaveResult(ctx context.Context, userId int, input domain.Result) (int, error)
-	Delete(ctx context.Context, id int) error
+	SaveResult(ctx context.Context, userId int, quizId int, input domain.Result) (int, error)
+	Delete(ctx context.Context, userId, quizId int) error
 }
