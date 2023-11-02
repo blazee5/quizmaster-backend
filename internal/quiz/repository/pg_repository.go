@@ -143,10 +143,20 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, input domain
 		INSERT INTO results (user_id, quiz_id, question_id, answer_id, is_correct)
 		VALUES ($1, $2, $3, $4, $5)`
 	selectAnswerQuery := `SELECT is_correct FROM answers WHERE id = $1`
+	selectTotalCorrectQuery := `SELECT COUNT(is_correct) FROM answers WHERE question_id = $1 AND is_correct = true`
 
 	var result int
 
-	for k, answerIds := range input.Answers {
+	for questionId, answerIds := range input.Answers {
+		var totalCorrect int
+		var userCorrectAnswers int
+
+		err := tx.QueryRowContext(ctx, selectTotalCorrectQuery, questionId).Scan(&totalCorrect)
+
+		if err != nil {
+			return 0, nil
+		}
+
 		for _, answerId := range answerIds {
 			var isCorrect bool
 			err := tx.QueryRowContext(ctx, selectAnswerQuery, answerId).Scan(&isCorrect)
@@ -155,15 +165,19 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, input domain
 				return 0, err
 			}
 
-			_, err = tx.ExecContext(ctx, insertResultQuery, userId, input.QuizId, k, answerId, isCorrect)
+			_, err = tx.ExecContext(ctx, insertResultQuery, userId, input.QuizId, questionId, answerId, isCorrect)
 			if err != nil {
 				tx.Rollback()
 				return 0, err
 			}
 
 			if isCorrect {
-				result++
+				userCorrectAnswers++
 			}
+		}
+
+		if userCorrectAnswers == totalCorrect {
+			result++
 		}
 	}
 

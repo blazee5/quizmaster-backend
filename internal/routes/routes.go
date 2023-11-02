@@ -12,16 +12,18 @@ import (
 	userService "github.com/blazee5/testhub-backend/internal/user/service"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
 type Server struct {
 	log *zap.SugaredLogger
 	db  *sqlx.DB
+	rdb *redis.Client
 }
 
-func NewServer(log *zap.SugaredLogger, db *sqlx.DB) *Server {
-	return &Server{log: log, db: db}
+func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client) *Server {
+	return &Server{log: log, db: db, rdb: rdb}
 }
 
 func (s *Server) InitRoutes(e *echo.Echo) {
@@ -49,7 +51,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		}
 
 		quizRepos := quizRepo.NewRepository(s.db)
-		quizServices := quizService.NewService(quizRepos)
+		quizRedisRepo := quizRepo.NewAuthRedisRepo(s.rdb)
+		quizServices := quizService.NewService(quizRepos, quizRedisRepo, s.log)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
 
 		quiz := e.Group("/quiz")

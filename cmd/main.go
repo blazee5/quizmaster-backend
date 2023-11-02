@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/blazee5/testhub-backend/internal/postgres"
 	"github.com/blazee5/testhub-backend/internal/routes"
+	"github.com/blazee5/testhub-backend/lib/db/postgres"
+	"github.com/blazee5/testhub-backend/lib/db/redis"
 	"github.com/blazee5/testhub-backend/lib/logger"
 	libValidator "github.com/blazee5/testhub-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
@@ -21,6 +22,7 @@ func main() {
 
 	log := logger.NewLogger()
 	db := postgres.New()
+	rdb := redis.NewRedisClient()
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -31,7 +33,7 @@ func main() {
 
 	e.Validator = libValidator.NewValidator(validator.New())
 
-	server := routes.NewServer(log, db)
+	server := routes.NewServer(log, db, rdb)
 	server.InitRoutes(e)
 
 	log.Fatal(e.Start(os.Getenv("PORT")))

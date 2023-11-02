@@ -5,14 +5,18 @@ import (
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/models"
 	"github.com/blazee5/testhub-backend/internal/quiz"
+	"go.uber.org/zap"
+	"strconv"
 )
 
 type Service struct {
-	repo quiz.Repository
+	repo      quiz.Repository
+	redisRepo quiz.RedisRepository
+	log       *zap.SugaredLogger
 }
 
-func NewService(repo quiz.Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo quiz.Repository, redisRepo quiz.RedisRepository, log *zap.SugaredLogger) *Service {
+	return &Service{repo: repo, redisRepo: redisRepo, log: log}
 }
 
 func (s *Service) GetAll(ctx context.Context) ([]models.Quiz, error) {
@@ -20,7 +24,27 @@ func (s *Service) GetAll(ctx context.Context) ([]models.Quiz, error) {
 }
 
 func (s *Service) GetById(ctx context.Context, id int) (models.Quiz, error) {
-	return s.repo.GetById(ctx, id)
+	cachedQuiz, err := s.redisRepo.GetByIdCtx(ctx, strconv.Itoa(id))
+
+	if err != nil {
+		s.log.Infof("cannot get quiz by id in redis: %v", err)
+	}
+
+	if cachedQuiz != nil {
+		return *cachedQuiz, nil
+	}
+
+	quiz, err := s.repo.GetById(ctx, id)
+
+	if err != nil {
+		return models.Quiz{}, err
+	}
+
+	if err := s.redisRepo.SetQuizCtx(ctx, strconv.Itoa(quiz.Id), 600, &quiz); err != nil {
+		s.log.Infof("error while save quiz to cache: %v", err)
+	}
+
+	return quiz, nil
 }
 
 func (s *Service) Create(ctx context.Context, input domain.Quiz) (int, error) {
