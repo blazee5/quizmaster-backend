@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/quiz"
 	"github.com/blazee5/testhub-backend/lib/http_errors"
@@ -10,7 +11,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -80,6 +83,54 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": response.ValidationError(validateErr),
 		})
+	}
+
+	file, err := c.FormFile("image")
+
+	if err == nil {
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		dst, err := os.Create(file.Filename)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		input.Image = file.Filename
+	}
+
+	for idx, question := range input.Questions {
+		file, err := c.FormFile(fmt.Sprintf("question_img%d", idx))
+
+		if err != nil {
+			continue
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		dst, err := os.Create(file.Filename)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		question.Image = file.Filename
 	}
 
 	input.UserId = userId
