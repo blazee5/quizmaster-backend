@@ -8,11 +8,11 @@ import (
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/quiz"
 	"github.com/blazee5/testhub-backend/lib/http_errors"
+	"github.com/blazee5/testhub-backend/lib/http_utils"
 	"github.com/blazee5/testhub-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -72,14 +72,15 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 
 	userId := c.Get("userId").(int)
 
-	//FIXME: переделать парсинг вопросов если возможно
+	//FIXME: переделать парсинг вопросов
 	questions := c.FormValue("questions")
 
 	err := json.Unmarshal([]byte(questions), &input.Questions)
 
 	if err != nil {
-		fmt.Println(err)
-		return c.JSON(http.StatusOK, err)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Questions is a required field",
+		})
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -96,52 +97,34 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		})
 	}
 
+	if _, err := os.Stat("public"); os.IsNotExist(err) {
+		err = os.Mkdir("public", os.ModePerm)
+	}
+
 	file, err := c.FormFile("image")
 
 	if err == nil {
-		src, err := file.Open()
-		if err != nil {
-			return err
+		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "server error",
+			})
 		}
-		defer src.Close()
-
-		dst, err := os.Create(file.Filename)
-		if err != nil {
-			return err
-		}
-		defer dst.Close()
-
-		if _, err = io.Copy(dst, src); err != nil {
-			return err
-		}
-
 		input.Image = file.Filename
 	}
 
-	for idx, question := range input.Questions {
-		file, err := c.FormFile(fmt.Sprintf("question_img%d", idx))
+	for idx := range input.Questions {
+		//FIXME: почему-то err всегда != nil
+		file, err := c.FormFile(fmt.Sprintf("question_img%d", idx+1))
 
-		if err != nil {
-			continue
+		if err == nil {
+			if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
+				return c.JSON(http.StatusInternalServerError, echo.Map{
+					"message": "server error",
+				})
+			}
+
+			input.Questions[idx].Image = file.Filename
 		}
-
-		src, err := file.Open()
-		if err != nil {
-			return err
-		}
-		defer src.Close()
-
-		dst, err := os.Create(file.Filename)
-		if err != nil {
-			return err
-		}
-		defer dst.Close()
-
-		if _, err = io.Copy(dst, src); err != nil {
-			return err
-		}
-
-		question.Image = file.Filename
 	}
 
 	input.UserId = userId
