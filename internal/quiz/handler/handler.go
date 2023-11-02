@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/blazee5/testhub-backend/internal/domain"
@@ -70,6 +71,16 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 	var input domain.Quiz
 
 	userId := c.Get("userId").(int)
+
+	//FIXME: переделать парсинг вопросов если возможно
+	questions := c.FormValue("questions")
+
+	err := json.Unmarshal([]byte(questions), &input.Questions)
+
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusOK, err)
+	}
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
