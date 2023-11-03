@@ -150,6 +150,7 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, 
 	for questionId, answerIds := range input.Answers {
 		var totalCorrect int
 		var userCorrectAnswers int
+		var totalUserAnswers int
 
 		err := tx.QueryRowContext(ctx, selectTotalCorrectQuery, questionId).Scan(&totalCorrect)
 
@@ -174,9 +175,11 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, 
 			if isCorrect {
 				userCorrectAnswers++
 			}
+
+			totalUserAnswers++
 		}
 
-		if userCorrectAnswers == totalCorrect {
+		if userCorrectAnswers == totalCorrect && totalUserAnswers == userCorrectAnswers {
 			result++
 		}
 	}

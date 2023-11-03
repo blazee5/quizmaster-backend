@@ -72,8 +72,13 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 
 	userId := c.Get("userId").(int)
 
-	//FIXME: переделать парсинг вопросов
 	questions := c.FormValue("questions")
+
+	if questions == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "The 'questions' field is required.",
+		})
+	}
 
 	err := json.Unmarshal([]byte(questions), &input.Questions)
 
