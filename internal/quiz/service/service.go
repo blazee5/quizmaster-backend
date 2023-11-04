@@ -73,7 +73,7 @@ func (s *Service) Delete(ctx context.Context, userId, quizId int) error {
 		return err
 	}
 
-	if quiz.Id != userId {
+	if quiz.UserId != userId {
 		return http_errors.PermissionDenied
 	}
 
