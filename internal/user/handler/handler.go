@@ -153,7 +153,7 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 		})
 	}
 
-	if err := http_utils.UploadFile(file, "./public"+file.Filename); err != nil {
+	if err := http_utils.UploadFile(file, "./public/"+file.Filename); err != nil {
 		return c.JSON(http.StatusInternalServerError, "error while upload avatar")
 	}
 
