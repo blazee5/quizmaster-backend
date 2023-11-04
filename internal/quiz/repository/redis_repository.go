@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"encoding/json"
-	"github.com/blazee5/testhub-backend/internal/models"
-	"github.com/blazee5/testhub-backend/internal/quiz"
+	"github.com/blazee5/quizmaster-backend/internal/models"
+	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/redis/go-redis/v9"
 	"time"
 )

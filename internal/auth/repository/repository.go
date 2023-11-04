@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"github.com/blazee5/testhub-backend/internal/domain"
-	"github.com/blazee5/testhub-backend/internal/models"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
 )
 

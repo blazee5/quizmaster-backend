@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/blazee5/testhub-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
 )
 
 type Service interface {

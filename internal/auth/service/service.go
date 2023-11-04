@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"github.com/blazee5/testhub-backend/internal/auth"
-	authRepo "github.com/blazee5/testhub-backend/internal/auth/repository"
-	"github.com/blazee5/testhub-backend/internal/domain"
-	authLib "github.com/blazee5/testhub-backend/lib/auth"
+	"github.com/blazee5/quizmaster-backend/internal/auth"
+	authRepo "github.com/blazee5/quizmaster-backend/internal/auth/repository"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
+	authLib "github.com/blazee5/quizmaster-backend/lib/auth"
 )
 
 type Service struct {

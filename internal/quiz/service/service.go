@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"github.com/blazee5/testhub-backend/internal/domain"
-	"github.com/blazee5/testhub-backend/internal/models"
-	"github.com/blazee5/testhub-backend/internal/quiz"
-	"github.com/blazee5/testhub-backend/lib/http_errors"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/models"
+	"github.com/blazee5/quizmaster-backend/internal/quiz"
+	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"go.uber.org/zap"
 	"strconv"
 )

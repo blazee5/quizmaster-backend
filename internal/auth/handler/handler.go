@@ -3,9 +3,9 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"github.com/blazee5/testhub-backend/internal/auth"
-	"github.com/blazee5/testhub-backend/internal/domain"
-	"github.com/blazee5/testhub-backend/lib/response"
+	"github.com/blazee5/quizmaster-backend/internal/auth"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"

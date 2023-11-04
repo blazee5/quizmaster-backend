@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/blazee5/testhub-backend/lib/auth"
+	"github.com/blazee5/quizmaster-backend/lib/auth"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"

@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/blazee5/testhub-backend/internal/domain"
-	"github.com/blazee5/testhub-backend/internal/quiz"
-	"github.com/blazee5/testhub-backend/lib/http_errors"
-	"github.com/blazee5/testhub-backend/lib/http_utils"
-	"github.com/blazee5/testhub-backend/lib/response"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/quiz"
+	"github.com/blazee5/quizmaster-backend/lib/http_errors"
+	"github.com/blazee5/quizmaster-backend/lib/http_utils"
+	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -103,7 +103,7 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 	}
 
 	if _, err := os.Stat("public"); os.IsNotExist(err) {
-		err = os.Mkdir("public", os.ModePerm)
+		_ = os.Mkdir("public", os.ModePerm)
 	}
 
 	file, err := c.FormFile("image")

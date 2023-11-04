@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"github.com/blazee5/testhub-backend/internal/domain"
-	"github.com/blazee5/testhub-backend/internal/models"
+	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
 	"slices"
 )
@@ -45,6 +45,7 @@ func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Qu
 	var quizzes []models.Quiz
 
 	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1", userId)
+	defer rows.Close()
 
 	if err != nil {
 		return nil, err
