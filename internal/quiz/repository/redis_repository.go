@@ -35,6 +35,7 @@ func (repo *quizRedisRepo) GetByIdCtx(ctx context.Context, key string) (*models.
 
 func (repo *quizRedisRepo) SetQuizCtx(ctx context.Context, key string, seconds int, quiz *models.Quiz) error {
 	quizBytes, err := json.Marshal(quiz)
+
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 	api := e.Group("/api")
 	{
 		userRepos := userRepo.NewRepository(s.db)
-		userServices := userService.NewService(userRepos)
+		userRedisRepo := userRepo.NewUserRedisRepo(s.rdb)
+		userServices := userService.NewService(s.log, userRepos, userRedisRepo)
 		userHandlers := userHandler.NewHandler(s.log, userServices)
 
 		user := api.Group("/user", AuthMiddleware)
@@ -52,7 +53,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 		quizRepos := quizRepo.NewRepository(s.db)
 		quizRedisRepo := quizRepo.NewAuthRedisRepo(s.rdb)
-		quizServices := quizService.NewService(quizRepos, quizRedisRepo, s.log)
+		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
 
 		quiz := e.Group("/quiz")

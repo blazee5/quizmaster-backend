@@ -11,13 +11,13 @@ import (
 )
 
 type Service struct {
+	log       *zap.SugaredLogger
 	repo      quiz.Repository
 	redisRepo quiz.RedisRepository
-	log       *zap.SugaredLogger
 }
 
-func NewService(repo quiz.Repository, redisRepo quiz.RedisRepository, log *zap.SugaredLogger) *Service {
-	return &Service{repo: repo, redisRepo: redisRepo, log: log}
+func NewService(log *zap.SugaredLogger, repo quiz.Repository, redisRepo quiz.RedisRepository) *Service {
+	return &Service{log: log, repo: repo, redisRepo: redisRepo}
 }
 
 func (s *Service) GetAll(ctx context.Context) ([]models.Quiz, error) {

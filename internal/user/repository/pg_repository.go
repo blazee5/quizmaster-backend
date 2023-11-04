@@ -10,8 +10,8 @@ type Repository struct {
 	db *sqlx.DB
 }
 
-func NewRepository(db *sqlx.DB) Repository {
-	return Repository{db: db}
+func NewRepository(db *sqlx.DB) *Repository {
+	return &Repository{db: db}
 }
 
 func (repo *Repository) GetUserById(ctx context.Context, userId int) (models.User, error) {
