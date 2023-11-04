@@ -46,9 +46,11 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 		user := api.Group("/user", AuthMiddleware)
 		{
-			user.GET("/me", userHandlers.GetMe)
-			user.PUT("/", userHandlers.UpdateMe)
-			user.DELETE("/", userHandlers.DeleteMe)
+			user.GET("/me", userHandlers.Get)
+			user.GET("/quizzes", userHandlers.GetQuizzes)
+			user.GET("/results", userHandlers.GetResults)
+			user.PUT("", userHandlers.Update)
+			user.DELETE("", userHandlers.Delete)
 		}
 
 		quizRepos := quizRepo.NewRepository(s.db)

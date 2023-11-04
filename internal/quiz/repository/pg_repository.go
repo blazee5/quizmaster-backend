@@ -139,23 +139,24 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, 
 	}
 	defer tx.Rollback()
 
-	insertResultQuery := `
-		INSERT INTO results (user_id, quiz_id, question_id, answer_id, is_correct)
-		VALUES ($1, $2, $3, $4, $5)`
-	selectAnswerQuery := `SELECT is_correct FROM answers WHERE id = $1`
-	selectTotalCorrectQuery := `SELECT COUNT(is_correct) FROM answers WHERE question_id = $1 AND is_correct = true`
+	var score float64
+	var totalQuestions float64
 
-	var result int
+	err = tx.QueryRowContext(ctx, selectTotalQuestionsQuery, quizId).Scan(&totalQuestions)
+
+	if err != nil {
+		return 0, err
+	}
 
 	for questionId, answerIds := range input.Answers {
-		var totalCorrect int
+		var totalCorrectAnswers int
 		var userCorrectAnswers int
 		var totalUserAnswers int
 
-		err := tx.QueryRowContext(ctx, selectTotalCorrectQuery, questionId).Scan(&totalCorrect)
+		err := tx.QueryRowContext(ctx, selectTotalCorrectQuery, questionId).Scan(&totalCorrectAnswers)
 
 		if err != nil {
-			return 0, nil
+			return 0, err
 		}
 
 		for _, answerId := range answerIds {
@@ -166,7 +167,7 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, 
 				return 0, err
 			}
 
-			_, err = tx.ExecContext(ctx, insertResultQuery, userId, quizId, questionId, answerId, isCorrect)
+			_, err = tx.ExecContext(ctx, insertUserAnswerQuery, userId, questionId, answerId, isCorrect)
 			if err != nil {
 				tx.Rollback()
 				return 0, err
@@ -179,16 +180,23 @@ func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, 
 			totalUserAnswers++
 		}
 
-		if userCorrectAnswers == totalCorrect && totalUserAnswers == userCorrectAnswers {
-			result++
+		if userCorrectAnswers == totalCorrectAnswers && totalUserAnswers == userCorrectAnswers {
+			score++
 		}
+	}
+
+	_, err = tx.ExecContext(ctx, insertResultQuery, userId, quizId, score, score/totalQuestions*100)
+
+	if err != nil {
+		tx.Rollback()
+		return 0, err
 	}
 
 	if err := tx.Commit(); err != nil {
 		return 0, err
 	}
 
-	return result, nil
+	return int(score), nil
 }
 
 func (repo *Repository) Delete(ctx context.Context, id int) error {

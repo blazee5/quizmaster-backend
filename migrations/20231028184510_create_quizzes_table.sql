@@ -7,7 +7,7 @@ CREATE TABLE quizzes(
     image VARCHAR(255),
     user_id int NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
 

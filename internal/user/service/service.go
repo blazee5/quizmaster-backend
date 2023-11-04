@@ -18,18 +18,18 @@ func NewService(log *zap.SugaredLogger, repo user.Repository, redisRepo user.Red
 	return &Service{log: log, repo: repo, redisRepo: redisRepo}
 }
 
-func (s *Service) GetUserById(ctx context.Context, userId int) (models.User, error) {
+func (s *Service) GetById(ctx context.Context, userId int) (models.User, error) {
 	cachedUser, err := s.redisRepo.GetByIdCtx(ctx, strconv.Itoa(userId))
 
 	if err != nil {
-		s.log.Infof("cannot get quiz by id in redis: %v", err)
+		s.log.Infof("cannot get user by id in redis: %v", err)
 	}
 
 	if cachedUser != nil {
 		return *cachedUser, nil
 	}
 
-	user, err := s.repo.GetUserById(ctx, userId)
+	user, err := s.repo.GetById(ctx, userId)
 
 	if err != nil {
 		return models.User{}, err
@@ -40,4 +40,16 @@ func (s *Service) GetUserById(ctx context.Context, userId int) (models.User, err
 	}
 
 	return user, nil
+}
+
+func (s *Service) GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error) {
+	return s.repo.GetQuizzes(ctx, userId)
+}
+
+func (s *Service) GetResults(ctx context.Context, userId int) ([]models.Quiz, error) {
+	return s.repo.GetResults(ctx, userId)
+}
+
+func (s *Service) Delete(ctx context.Context, userId int) error {
+	return s.repo.Delete(ctx, userId)
 }

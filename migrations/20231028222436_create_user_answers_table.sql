@@ -3,14 +3,12 @@
 CREATE TABLE user_answers(
     id          SERIAL PRIMARY KEY,
     user_id     INT     NOT NULL,
-    attempt_id INT NOT NULL,
     question_id INT     NOT NULL,
     answer_id   INT     NOT NULL,
     is_correct  BOOLEAN NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (question_id) REFERENCES questions (id),
-    FOREIGN KEY (answer_id) REFERENCES answers (id),
-    FOREIGN KEY (attempt_id) REFERENCES quiz_attempts (id)
+    FOREIGN KEY (answer_id) REFERENCES answers (id)
 );
 
 -- +goose StatementEnd

@@ -1,7 +1,19 @@
 package domain
 
 type User struct {
-	Id    int    `json:"id" db:"id"`
-	Fio   string `json:"fio" db:"fio"`
-	Email string `json:"email" db:"email"`
+	Id     int    `json:"id"`
+	Fio    string `json:"fio"`
+	Email  string `json:"email"`
+	Avatar string `json:"avatar"`
+}
+
+type UserQuiz struct {
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Questions   []Question `json:"questions"`
+	Image       string     `json:"image"`
+}
+
+type UserResult struct {
+	Quizzes []Quiz `json:"quizzes"`
 }

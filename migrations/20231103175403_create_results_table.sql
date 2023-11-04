@@ -2,9 +2,12 @@
 -- +goose StatementBegin
 CREATE TABLE results(
     id SERIAL PRIMARY KEY,
-    attempt_id int NOT NULL,
+    user_id INT NOT NULL,
+    quiz_id INT NOT NULL,
     score INT NOT NULL,
-    percent DECIMAL NOT NULL
+    percent INT NOT NULL,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
 );
 -- +goose StatementEnd
 

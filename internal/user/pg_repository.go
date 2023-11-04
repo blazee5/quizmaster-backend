@@ -6,5 +6,8 @@ import (
 )
 
 type Repository interface {
-	GetUserById(ctx context.Context, userId int) (models.User, error)
+	GetById(ctx context.Context, userId int) (models.User, error)
+	GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error)
+	GetResults(ctx context.Context, userId int) ([]models.Quiz, error)
+	Delete(ctx context.Context, userId int) error
 }
