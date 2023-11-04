@@ -49,6 +49,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			user.GET("/me", userHandlers.Get)
 			user.GET("/quizzes", userHandlers.GetQuizzes)
 			user.GET("/results", userHandlers.GetResults)
+			user.POST("/avatar", userHandlers.UploadAvatar)
 			user.PUT("", userHandlers.Update)
 			user.DELETE("", userHandlers.Delete)
 		}

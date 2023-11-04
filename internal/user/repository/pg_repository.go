@@ -74,6 +74,16 @@ func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Qu
 
 }
 
+func (repo *Repository) ChangeAvatar(ctx context.Context, userId int, file string) error {
+	_, err := repo.db.ExecContext(ctx, "UPDATE users SET avatar = $1 WHERE id = $2", file, userId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo *Repository) Delete(ctx context.Context, userId int) error {
 	res, err := repo.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userId)
 

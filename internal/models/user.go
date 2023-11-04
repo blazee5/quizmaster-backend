@@ -5,4 +5,5 @@ type User struct {
 	Fio      string `json:"fio" db:"fio" redis:"fio"`
 	Email    string `json:"email" db:"email" redis:"email"`
 	Password string `json:"password" db:"password" redis:"password"`
+	Avatar   string `json:"avatar" db:"avatar" redis:"avatar"`
 }

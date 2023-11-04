@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/user"
+	"github.com/blazee5/testhub-backend/lib/http_utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
@@ -109,4 +110,30 @@ func (h *Handler) Delete(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, "OK")
+}
+
+func (h *Handler) UploadAvatar(c echo.Context) error {
+	userId := c.Get("userId").(int)
+
+	file, err := c.FormFile("file")
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "file is required",
+		})
+	}
+
+	if err := http_utils.UploadFile(file, "./public"+file.Filename); err != nil {
+		return c.JSON(http.StatusInternalServerError, "error while upload avatar")
+	}
+
+	err = h.service.ChangeAvatar(c.Request().Context(), userId, file.Filename)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "success")
 }

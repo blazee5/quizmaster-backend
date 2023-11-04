@@ -50,6 +50,10 @@ func (s *Service) GetResults(ctx context.Context, userId int) ([]models.Quiz, er
 	return s.repo.GetResults(ctx, userId)
 }
 
+func (s *Service) ChangeAvatar(ctx context.Context, userId int, file string) error {
+	return s.repo.ChangeAvatar(ctx, userId, file)
+}
+
 func (s *Service) Delete(ctx context.Context, userId int) error {
 	return s.repo.Delete(ctx, userId)
 }
