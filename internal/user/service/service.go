@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/models"
 	"github.com/blazee5/testhub-backend/internal/user"
 	"go.uber.org/zap"
@@ -52,6 +53,10 @@ func (s *Service) GetResults(ctx context.Context, userId int) ([]models.Quiz, er
 
 func (s *Service) ChangeAvatar(ctx context.Context, userId int, file string) error {
 	return s.repo.ChangeAvatar(ctx, userId, file)
+}
+
+func (s *Service) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
+	return s.repo.Update(ctx, userId, input)
 }
 
 func (s *Service) Delete(ctx context.Context, userId int) error {

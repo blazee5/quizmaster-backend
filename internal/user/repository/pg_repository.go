@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/models"
 	"github.com/jmoiron/sqlx"
 	"slices"
@@ -76,6 +77,16 @@ func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Qu
 
 func (repo *Repository) ChangeAvatar(ctx context.Context, userId int, file string) error {
 	_, err := repo.db.ExecContext(ctx, "UPDATE users SET avatar = $1 WHERE id = $2", file, userId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
+	_, err := repo.db.ExecContext(ctx, "UPDATE users SET fio = COALESCE(NULLIF($1, ''), fio) WHERE id = $2", input.Fio, userId)
 
 	if err != nil {
 		return err

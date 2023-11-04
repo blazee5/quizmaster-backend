@@ -7,6 +7,10 @@ type User struct {
 	Avatar string `json:"avatar"`
 }
 
+type UpdateUser struct {
+	Fio string `json:"fio" validate:"required,min=4"`
+}
+
 type UserQuiz struct {
 	Title       string     `json:"title"`
 	Description string     `json:"description"`

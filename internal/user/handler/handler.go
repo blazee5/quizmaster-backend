@@ -6,6 +6,8 @@ import (
 	"github.com/blazee5/testhub-backend/internal/domain"
 	"github.com/blazee5/testhub-backend/internal/user"
 	"github.com/blazee5/testhub-backend/lib/http_utils"
+	"github.com/blazee5/testhub-backend/lib/response"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
@@ -39,9 +41,10 @@ func (h *Handler) Get(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, domain.User{
-		Id:    user.Id,
-		Fio:   user.Fio,
-		Email: user.Email,
+		Id:     user.Id,
+		Fio:    user.Fio,
+		Email:  user.Email,
+		Avatar: user.Avatar,
 	})
 }
 
@@ -88,7 +91,34 @@ func (h *Handler) GetResults(c echo.Context) error {
 }
 
 func (h *Handler) Update(c echo.Context) error {
-	return nil
+	var input domain.UpdateUser
+
+	userId := c.Get("userId").(int)
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err := h.service.Update(c.Request().Context(), userId, input)
+
+	if err != nil {
+		h.log.Infof("error while update user: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "success")
 }
 
 func (h *Handler) Delete(c echo.Context) error {
