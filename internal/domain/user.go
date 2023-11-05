@@ -1,14 +1,14 @@
 package domain
 
 type User struct {
-	Id     int    `json:"id"`
-	Fio    string `json:"fio"`
-	Email  string `json:"email"`
-	Avatar string `json:"avatar"`
+	Id       int    `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Avatar   string `json:"avatar"`
 }
 
 type UpdateUser struct {
-	Fio string `json:"fio" validate:"required,min=4"`
+	Username string `json:"username" validate:"required"`
 }
 
 type UserQuiz struct {

@@ -36,7 +36,7 @@ func (s *Service) GetById(ctx context.Context, userId int) (models.User, error) 
 		return models.User{}, err
 	}
 
-	if err := s.redisRepo.SetUserCtx(ctx, strconv.Itoa(user.Id), 600, &user); err != nil {
+	if err := s.redisRepo.SetUserCtx(ctx, strconv.Itoa(user.Id), 60, &user); err != nil {
 		s.log.Infof("error while save user to cache: %v", err)
 	}
 

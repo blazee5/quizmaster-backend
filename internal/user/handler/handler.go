@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 )
 
 type Handler struct {
@@ -41,10 +42,35 @@ func (h *Handler) Get(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, domain.User{
-		Id:     user.Id,
-		Fio:    user.Fio,
-		Email:  user.Email,
-		Avatar: user.Avatar,
+		Id:       user.Id,
+		Username: user.Username,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
+	})
+}
+
+func (h *Handler) GetById(c echo.Context) error {
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	user, err := h.service.GetById(c.Request().Context(), userId)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, domain.User{
+		Id:       user.Id,
+		Username: user.Username,
+		Email:    user.Email,
+		Avatar:   user.Avatar,
 	})
 }
 

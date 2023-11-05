@@ -87,7 +87,7 @@ func (repo *Repository) ChangeAvatar(ctx context.Context, userId int, file strin
 }
 
 func (repo *Repository) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
-	_, err := repo.db.ExecContext(ctx, "UPDATE users SET fio = COALESCE(NULLIF($1, ''), fio) WHERE id = $2", input.Fio, userId)
+	_, err := repo.db.ExecContext(ctx, "UPDATE users SET username = COALESCE(NULLIF($1, ''), username) WHERE id = $2", input.Username, userId)
 
 	if err != nil {
 		return err
