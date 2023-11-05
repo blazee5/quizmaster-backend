@@ -30,7 +30,7 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.User, e
 }
 
 func (repo *Repository) GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error) {
-	var quizzes []models.Quiz
+	quizzes := make([]models.Quiz, 0)
 
 	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userId)
 
@@ -42,7 +42,7 @@ func (repo *Repository) GetQuizzes(ctx context.Context, userId int) ([]models.Qu
 }
 
 func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Quiz, error) {
-	var quizzes []models.Quiz
+	quizzes := make([]models.Quiz, 0)
 
 	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1", userId)
 	defer rows.Close()

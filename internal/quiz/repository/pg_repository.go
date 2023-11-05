@@ -17,7 +17,7 @@ func NewRepository(db *sqlx.DB) *Repository {
 }
 
 func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
-	var quizzes []models.Quiz
+	quizzes := make([]models.Quiz, 0)
 
 	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes")
 
@@ -90,13 +90,13 @@ func (repo *Repository) GetById(ctx context.Context, id int) (models.Quiz, error
 }
 
 func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error) {
-	var questions []models.Question
+	questions := make([]models.Question, 0)
 
 	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
 		return nil, err
 	}
 
-	var answers []models.Answer
+	answers := make([]models.Answer, 0)
 
 	query := `
         SELECT id, text, question_id
