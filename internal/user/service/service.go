@@ -52,7 +52,17 @@ func (s *Service) GetResults(ctx context.Context, userId int) ([]models.Quiz, er
 }
 
 func (s *Service) ChangeAvatar(ctx context.Context, userId int, file string) error {
-	return s.repo.ChangeAvatar(ctx, userId, file)
+	err := s.repo.ChangeAvatar(ctx, userId, file)
+
+	if err != nil {
+		return err
+	}
+
+	if err := s.redisRepo.DeleteUserCtx(ctx, strconv.Itoa(userId)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
