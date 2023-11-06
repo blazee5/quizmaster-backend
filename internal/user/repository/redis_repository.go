@@ -47,7 +47,7 @@ func (repo *UserRedisRepo) SetUserCtx(ctx context.Context, key string, seconds i
 }
 
 func (repo *UserRedisRepo) DeleteUserCtx(ctx context.Context, key string) error {
-	if err := repo.redisClient.Del(ctx, key).Err(); err != nil {
+	if err := repo.redisClient.Del(ctx, "user:"+key).Err(); err != nil {
 		return err
 	}
 

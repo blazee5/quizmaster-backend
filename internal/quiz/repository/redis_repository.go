@@ -26,7 +26,7 @@ func (repo *quizRedisRepo) GetByIdCtx(ctx context.Context, key string) (*models.
 
 	var quiz *models.Quiz
 
-	if err = json.Unmarshal(quizBytes, quiz); err != nil {
+	if err = json.Unmarshal(quizBytes, &quiz); err != nil {
 		return nil, err
 	}
 

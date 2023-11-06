@@ -41,7 +41,7 @@ func (s *Service) GetById(ctx context.Context, id int) (models.Quiz, error) {
 		return models.Quiz{}, err
 	}
 
-	if err := s.redisRepo.SetQuizCtx(ctx, strconv.Itoa(quiz.Id), 60, &quiz); err != nil {
+	if err := s.redisRepo.SetQuizCtx(ctx, strconv.Itoa(quiz.Id), 600, &quiz); err != nil {
 		s.log.Infof("error while save quiz to cache: %v", err)
 	}
 

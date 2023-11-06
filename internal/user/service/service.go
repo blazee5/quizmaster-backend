@@ -36,7 +36,7 @@ func (s *Service) GetById(ctx context.Context, userId int) (models.User, error) 
 		return models.User{}, err
 	}
 
-	if err := s.redisRepo.SetUserCtx(ctx, strconv.Itoa(user.Id), 60, &user); err != nil {
+	if err := s.redisRepo.SetUserCtx(ctx, strconv.Itoa(user.Id), 600, &user); err != nil {
 		s.log.Infof("error while save user to cache: %v", err)
 	}
 
@@ -56,7 +56,17 @@ func (s *Service) ChangeAvatar(ctx context.Context, userId int, file string) err
 }
 
 func (s *Service) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
-	return s.repo.Update(ctx, userId, input)
+	err := s.repo.Update(ctx, userId, input)
+
+	if err != nil {
+		return err
+	}
+
+	if err := s.redisRepo.DeleteUserCtx(ctx, strconv.Itoa(userId)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) Delete(ctx context.Context, userId int) error {
