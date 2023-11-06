@@ -7,3 +7,16 @@ type User struct {
 	Password string `json:"password" db:"password" redis:"password"`
 	Avatar   string `json:"avatar" db:"avatar" redis:"avatar"`
 }
+
+type ShortUser struct {
+	Id       int    `json:"id" db:"id" redis:"id"`
+	Username string `json:"username" db:"username" redis:"username"`
+	Email    string `json:"email" db:"email" redis:"email"`
+	Avatar   string `json:"avatar" db:"avatar" redis:"avatar"`
+}
+
+type UserInfo struct {
+	User    ShortUser    `json:"user"`
+	Quizzes []Quiz       `json:"quizzes"`
+	Results []UserResult `json:"results"`
+}

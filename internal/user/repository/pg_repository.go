@@ -17,16 +17,68 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) GetById(ctx context.Context, userId int) (models.User, error) {
-	var user models.User
+func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInfo, error) {
+	var user models.ShortUser
 
-	err := repo.db.QueryRowxContext(ctx, "SELECT * FROM users WHERE id = $1", userId).StructScan(&user)
+	err := repo.db.QueryRowxContext(ctx, "SELECT id, username, email, avatar FROM users WHERE id = $1", userId).StructScan(&user)
 
 	if err != nil {
-		return models.User{}, err
+		return models.UserInfo{}, err
 	}
 
-	return user, nil
+	quizzes := make([]models.Quiz, 0)
+
+	err = repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userId)
+
+	if err != nil {
+		return models.UserInfo{}, err
+	}
+
+	results := make([]models.Result, 0)
+	userResults := make([]models.UserResult, 0)
+
+	err = repo.db.SelectContext(ctx, &results, "SELECT * FROM results WHERE user_id = $1", userId)
+
+	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1 ORDER BY score ASC", userId)
+	defer rows.Close()
+
+	if err != nil {
+		return models.UserInfo{}, err
+	}
+
+	for _, result := range results {
+		var quiz models.Quiz
+
+		err = repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", result.QuizId).StructScan(&quiz)
+
+		if err != nil {
+			return models.UserInfo{}, err
+		}
+
+		quizFound := false
+		for _, userResult := range userResults {
+			if userResult.Quiz.Id == quiz.Id {
+				quizFound = true
+				break
+			}
+		}
+
+		if !quizFound {
+			userResults = append(userResults, models.UserResult{
+				Quiz:      quiz,
+				Score:     result.Score,
+				Percent:   result.Percent,
+				CreatedAt: result.CreatedAt,
+			})
+		}
+
+	}
+
+	return models.UserInfo{
+		User:    user,
+		Quizzes: quizzes,
+		Results: userResults,
+	}, nil
 }
 
 func (repo *Repository) GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error) {

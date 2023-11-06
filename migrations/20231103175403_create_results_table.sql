@@ -6,6 +6,7 @@ CREATE TABLE results(
     quiz_id INT NOT NULL,
     score INT NOT NULL,
     percent INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (quiz_id) REFERENCES quizzes (id),
     FOREIGN KEY (user_id) REFERENCES users (id)
 );

@@ -19,24 +19,24 @@ func NewService(log *zap.SugaredLogger, repo user.Repository, redisRepo user.Red
 	return &Service{log: log, repo: repo, redisRepo: redisRepo}
 }
 
-func (s *Service) GetById(ctx context.Context, userId int) (models.User, error) {
-	cachedUser, err := s.redisRepo.GetByIdCtx(ctx, strconv.Itoa(userId))
-
-	if err != nil {
-		s.log.Infof("cannot get user by id in redis: %v", err)
-	}
-
-	if cachedUser != nil {
-		return *cachedUser, nil
-	}
+func (s *Service) GetById(ctx context.Context, userId int) (models.UserInfo, error) {
+	//cachedUser, err := s.redisRepo.GetByIdCtx(ctx, strconv.Itoa(userId))
+	//
+	//if err != nil {
+	//	s.log.Infof("cannot get user by id in redis: %v", err)
+	//}
+	//
+	//if cachedUser != nil {
+	//	return *cachedUser, nil
+	//}
 
 	user, err := s.repo.GetById(ctx, userId)
 
 	if err != nil {
-		return models.User{}, err
+		return models.UserInfo{}, err
 	}
 
-	if err := s.redisRepo.SetUserCtx(ctx, strconv.Itoa(user.Id), 600, &user); err != nil {
+	if err := s.redisRepo.SetUserCtx(ctx, strconv.Itoa(user.User.Id), 600, &user); err != nil {
 		s.log.Infof("error while save user to cache: %v", err)
 	}
 

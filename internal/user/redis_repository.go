@@ -6,7 +6,7 @@ import (
 )
 
 type RedisRepository interface {
-	GetByIdCtx(ctx context.Context, key string) (*models.User, error)
-	SetUserCtx(ctx context.Context, key string, seconds int, user *models.User) error
+	GetByIdCtx(ctx context.Context, key string) (*models.UserInfo, error)
+	SetUserCtx(ctx context.Context, key string, seconds int, user *models.UserInfo) error
 	DeleteUserCtx(ctx context.Context, key string) error
 }

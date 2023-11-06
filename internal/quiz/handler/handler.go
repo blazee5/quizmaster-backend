@@ -67,6 +67,10 @@ func (h *Handler) GetQuiz(c echo.Context) error {
 	return c.JSON(http.StatusOK, quiz)
 }
 
+//func (h *Handler) SearchByTitle(c echo.Context) error {
+//	title := c.QueryParam("title")
+//}
+
 func (h *Handler) CreateQuiz(c echo.Context) error {
 	var input domain.Quiz
 

@@ -41,12 +41,7 @@ func (h *Handler) Get(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, domain.User{
-		Id:       user.Id,
-		Username: user.Username,
-		Email:    user.Email,
-		Avatar:   user.Avatar,
-	})
+	return c.JSON(http.StatusOK, user)
 }
 
 func (h *Handler) GetById(c echo.Context) error {
@@ -60,60 +55,20 @@ func (h *Handler) GetById(c echo.Context) error {
 
 	user, err := h.service.GetById(c.Request().Context(), userId)
 
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "server error",
-		})
-	}
-
-	return c.JSON(http.StatusOK, domain.User{
-		Id:       user.Id,
-		Username: user.Username,
-		Email:    user.Email,
-		Avatar:   user.Avatar,
-	})
-}
-
-func (h *Handler) GetQuizzes(c echo.Context) error {
-	userId := c.Get("userId").(int)
-
-	quizzes, err := h.service.GetQuizzes(c.Request().Context(), userId)
-
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
-			"message": "quizzes not found",
+			"message": "user not found",
 		})
 	}
 
 	if err != nil {
-		h.log.Infof("error while get user quizzes: %s", err)
+		h.log.Infof("error while get user by id: %v", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
 	}
 
-	return c.JSON(http.StatusOK, quizzes)
-}
-
-func (h *Handler) GetResults(c echo.Context) error {
-	userId := c.Get("userId").(int)
-
-	quizzes, err := h.service.GetResults(c.Request().Context(), userId)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return c.JSON(http.StatusNotFound, echo.Map{
-			"message": "quizzes not found",
-		})
-	}
-
-	if err != nil {
-		h.log.Infof("error while get user results: %s", err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "server error",
-		})
-	}
-
-	return c.JSON(http.StatusOK, quizzes)
+	return c.JSON(http.StatusOK, user)
 }
 
 func (h *Handler) Update(c echo.Context) error {

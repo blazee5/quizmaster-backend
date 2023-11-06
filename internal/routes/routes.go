@@ -47,8 +47,6 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		user := api.Group("/user", AuthMiddleware)
 		{
 			user.GET("/me", userHandlers.Get)
-			user.GET("/quizzes", userHandlers.GetQuizzes)
-			user.GET("/results", userHandlers.GetResults)
 			user.GET("/:id", userHandlers.GetById)
 			user.POST("/avatar", userHandlers.UploadAvatar)
 			user.PUT("", userHandlers.Update)
@@ -57,13 +55,14 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 		quizRepos := quizRepo.NewRepository(s.db)
 		quizRedisRepo := quizRepo.NewAuthRedisRepo(s.rdb)
-		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo)
+		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
 
 		quiz := e.Group("/quiz")
 		{
 			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
 			quiz.GET("", quizHandlers.GetAllQuizzes)
+			//quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
 			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
 			quiz.GET("/:id/questions", quizHandlers.GetQuizQuestions, AuthMiddleware)
