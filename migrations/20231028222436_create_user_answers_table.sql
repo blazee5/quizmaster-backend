@@ -5,7 +5,7 @@ CREATE TABLE user_answers(
     user_id     INT     NOT NULL,
     question_id INT     NOT NULL,
     answer_id   INT     NOT NULL,
-    is_correct  BOOLEAN NOT NULL,
+    text VARCHAR(255) NOT NULL DEFAULT '',
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (question_id) REFERENCES questions (id),
     FOREIGN KEY (answer_id) REFERENCES answers (id)

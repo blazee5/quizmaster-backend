@@ -5,6 +5,7 @@ CREATE TABLE questions(
     title VARCHAR(255) NOT NULL,
     image VARCHAR(255),
     quiz_id int NOT NULL,
+    type VARCHAR(255) NOT NULL DEFAULT 'choise',
     CONSTRAINT quiz_id FOREIGN KEY (quiz_id) REFERENCES quizzes (id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
