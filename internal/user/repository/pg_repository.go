@@ -34,44 +34,53 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInf
 		return models.UserInfo{}, err
 	}
 
-	results := make([]models.Result, 0)
-	userResults := make([]models.UserResult, 0)
+	var userResults []models.UserResult
+	processedQuizzes := make([]int, 0)
 
-	err = repo.db.SelectContext(ctx, &results, "SELECT * FROM results WHERE user_id = $1", userId)
-
-	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1 ORDER BY score ASC", userId)
-	defer rows.Close()
+	query := `SELECT q.id AS quiz_id, q.title, q.description, q.image, q.user_id, q.created_at, r.score, r.percent, r.created_at
+			  FROM results r
+		      INNER JOIN quizzes q ON r.quiz_id = q.id 
+		      WHERE r.user_id = $1 
+			  ORDER BY r.score DESC`
 
 	if err != nil {
 		return models.UserInfo{}, err
 	}
 
-	for _, result := range results {
+	rows, err := repo.db.QueryxContext(ctx, query, userId)
+	if err != nil {
+		return models.UserInfo{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userResult models.UserResult
 		var quiz models.Quiz
 
-		err = repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", result.QuizId).StructScan(&quiz)
-
+		err := rows.Scan(
+			&quiz.Id,
+			&quiz.Title,
+			&quiz.Description,
+			&quiz.Image,
+			&quiz.UserId,
+			&quiz.CreatedAt,
+			&userResult.Score,
+			&userResult.Percent,
+			&userResult.CreatedAt,
+		)
 		if err != nil {
 			return models.UserInfo{}, err
 		}
 
-		quizFound := false
-		for _, userResult := range userResults {
-			if userResult.Quiz.Id == quiz.Id {
-				quizFound = true
-				break
-			}
+		if !slices.Contains(processedQuizzes, quiz.Id) {
+			userResult.Quiz = quiz
+			userResults = append(userResults, userResult)
+			processedQuizzes = append(processedQuizzes, quiz.Id)
 		}
+	}
 
-		if !quizFound {
-			userResults = append(userResults, models.UserResult{
-				Quiz:      quiz,
-				Score:     result.Score,
-				Percent:   result.Percent,
-				CreatedAt: result.CreatedAt,
-			})
-		}
-
+	if err := rows.Err(); err != nil {
+		return models.UserInfo{}, err
 	}
 
 	return models.UserInfo{

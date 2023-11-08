@@ -16,6 +16,16 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
+func (repo *Repository) NewTx() (*sqlx.Tx, error) {
+	tx, err := repo.db.Beginx()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
 func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
 	quizzes := make([]models.Quiz, 0)
 
@@ -49,8 +59,8 @@ func (repo *Repository) Create(ctx context.Context, input domain.Quiz) (int, err
 		var questionId int
 		question.QuizId = quizId
 
-		err := tx.QueryRowxContext(ctx, "INSERT INTO questions (title, image, quiz_id) VALUES ($1, $2, $3) RETURNING id",
-			question.Title, question.Image, quizId).Scan(&questionId)
+		err := tx.QueryRowxContext(ctx, "INSERT INTO questions (title, image, quiz_id, type) VALUES ($1, $2, $3, $4) RETURNING id",
+			question.Title, question.Image, quizId, question.Type).Scan(&questionId)
 
 		if err != nil {
 			tx.Rollback()
@@ -132,73 +142,6 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 	return questions, nil
 }
 
-func (repo *Repository) SaveResult(ctx context.Context, userId int, quizId int, input domain.Result) (int, error) {
-	tx, err := repo.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return 0, err
-	}
-	defer tx.Rollback()
-
-	var score float64
-	var totalQuestions float64
-
-	err = tx.QueryRowContext(ctx, selectTotalQuestionsQuery, quizId).Scan(&totalQuestions)
-
-	if err != nil {
-		return 0, err
-	}
-
-	for questionId, answerIds := range input.Answers {
-		var totalCorrectAnswers int
-		var userCorrectAnswers int
-		var totalUserAnswers int
-
-		err := tx.QueryRowContext(ctx, selectTotalCorrectQuery, questionId).Scan(&totalCorrectAnswers)
-
-		if err != nil {
-			return 0, err
-		}
-
-		for _, answerId := range answerIds {
-			var isCorrect bool
-			err := tx.QueryRowContext(ctx, selectAnswerQuery, answerId).Scan(&isCorrect)
-			if err != nil {
-				tx.Rollback()
-				return 0, err
-			}
-
-			_, err = tx.ExecContext(ctx, insertUserAnswerQuery, userId, questionId, answerId, isCorrect)
-			if err != nil {
-				tx.Rollback()
-				return 0, err
-			}
-
-			if isCorrect {
-				userCorrectAnswers++
-			}
-
-			totalUserAnswers++
-		}
-
-		if userCorrectAnswers == totalCorrectAnswers && totalUserAnswers == userCorrectAnswers {
-			score++
-		}
-	}
-
-	_, err = tx.ExecContext(ctx, insertResultQuery, userId, quizId, score, score/totalQuestions*100)
-
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return 0, err
-	}
-
-	return int(score), nil
-}
-
 func (repo *Repository) Delete(ctx context.Context, id int) error {
 	res, err := repo.db.ExecContext(ctx, "DELETE FROM quizzes WHERE id = $1", id)
 
@@ -214,6 +157,72 @@ func (repo *Repository) Delete(ctx context.Context, id int) error {
 
 	if rows < 1 {
 		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (repo *Repository) GetAnswerById(ctx context.Context, id int) (models.Answer, error) {
+	var answer models.Answer
+
+	err := repo.db.QueryRowxContext(ctx, selectAnswerQuery, id).StructScan(&answer)
+	if err != nil {
+		return models.Answer{}, err
+	}
+	return answer, nil
+}
+
+func (repo *Repository) GetAnswersById(ctx context.Context, id int) ([]models.Answer, error) {
+	var answer []models.Answer
+
+	err := repo.db.SelectContext(ctx, &answer, selectAnswersQuery, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return answer, nil
+}
+
+func (repo *Repository) GetQuestionType(ctx context.Context, id int) (string, error) {
+	var questionType string
+
+	err := repo.db.QueryRowContext(ctx, selectQuestionTypeQuery, id).Scan(&questionType)
+	if err != nil {
+		return "", err
+	}
+
+	return questionType, nil
+}
+
+func (repo *Repository) SaveUserAnswer(ctx context.Context, tx *sqlx.Tx, userId, questionId, answerId int, answerText string) error {
+	_, err := tx.ExecContext(ctx, insertUserAnswerQuery, userId, questionId, answerId, answerText)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) GetCorrectAnswers(ctx context.Context, id int) (int, error) {
+	var totalCorrectAnswers int
+
+	err := repo.db.QueryRowContext(ctx, selectTotalCorrectQuery, id).Scan(&totalCorrectAnswers)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return totalCorrectAnswers, nil
+}
+
+func (repo *Repository) SaveResult(ctx context.Context, userId, quizId int, score, percent int) error {
+	_, err := repo.db.ExecContext(ctx, insertResultQuery, userId, quizId, score, percent)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

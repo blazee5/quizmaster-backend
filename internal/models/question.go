@@ -6,4 +6,5 @@ type Question struct {
 	Image   string   `json:"image" db:"image"`
 	Answers []Answer `json:"answers" db:"answers"`
 	QuizId  int      `json:"quiz_id" db:"quiz_id"`
+	Type    string   `json:"type" db:"type"`
 }

@@ -1,5 +1,5 @@
 package domain
 
 type Result struct {
-	Answers map[int][]int `json:"answers" validate:"required"`
+	Answers map[int]interface{} `json:"answers" validate:"required"`
 }

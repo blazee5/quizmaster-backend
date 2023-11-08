@@ -20,15 +20,15 @@ func NewService(log *zap.SugaredLogger, repo user.Repository, redisRepo user.Red
 }
 
 func (s *Service) GetById(ctx context.Context, userId int) (models.UserInfo, error) {
-	//cachedUser, err := s.redisRepo.GetByIdCtx(ctx, strconv.Itoa(userId))
-	//
-	//if err != nil {
-	//	s.log.Infof("cannot get user by id in redis: %v", err)
-	//}
-	//
-	//if cachedUser != nil {
-	//	return *cachedUser, nil
-	//}
+	cachedUser, err := s.redisRepo.GetByIdCtx(ctx, strconv.Itoa(userId))
+
+	if err != nil {
+		s.log.Infof("cannot get user by id in redis: %v", err)
+	}
+
+	if cachedUser != nil {
+		return *cachedUser, nil
+	}
 
 	user, err := s.repo.GetById(ctx, userId)
 

@@ -80,7 +80,7 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 
 	if questions == "" {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "The 'questions' field is required.",
+			"message": "Questions field is required.",
 		})
 	}
 
@@ -93,6 +93,7 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
+		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "bad request",
 		})
