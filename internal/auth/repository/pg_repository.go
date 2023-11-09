@@ -11,8 +11,8 @@ type Repository struct {
 	db *sqlx.DB
 }
 
-func NewRepository(db *sqlx.DB) Repository {
-	return Repository{db: db}
+func NewRepository(db *sqlx.DB) *Repository {
+	return &Repository{db: db}
 }
 
 func (repo *Repository) CreateUser(ctx context.Context, input domain.SignUpRequest) (int, error) {

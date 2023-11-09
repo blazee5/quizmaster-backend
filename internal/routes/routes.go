@@ -28,7 +28,7 @@ func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client) *Server {
 
 func (s *Server) InitRoutes(e *echo.Echo) {
 	authRepos := authRepo.NewRepository(s.db)
-	authServices := authService.NewService(authRepos)
+	authServices := authService.NewService(s.log, authRepos)
 	authHandlers := authHandler.NewHandler(s.log, authServices)
 
 	auth := e.Group("/auth")
