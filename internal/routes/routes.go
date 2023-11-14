@@ -71,13 +71,15 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
 
 			questionRepos := questionRepo.NewRepository(s.db)
-			questionServices := questionService.NewService(s.log, questionRepos)
+			questionServices := questionService.NewService(s.log, questionRepos, quizRepos)
 			questionHandlers := questionHandler.NewHandler(s.log, questionServices)
 
-			question := quiz.Group("/:id/question")
+			question := quiz.Group("/:id/questions")
 			{
 				question.POST("", questionHandlers.CreateQuestion, AuthMiddleware)
 				question.GET("", questionHandlers.GetQuizQuestions, AuthMiddleware)
+				question.PUT("/:questionId", questionHandlers.UpdateQuestion, AuthMiddleware)
+				question.DELETE("/:questionId", questionHandlers.DeleteQuestion, AuthMiddleware)
 			}
 		}
 	}

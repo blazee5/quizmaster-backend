@@ -50,5 +50,90 @@ func (repo *Repository) CreateQuestion(ctx context.Context, quizId int, input do
 }
 
 func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error) {
-	return nil, nil
+	questions := make([]models.Question, 0)
+
+	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
+		return nil, err
+	}
+
+	answers := make([]models.Answer, 0)
+
+	query := `
+        SELECT id, text, question_id
+        FROM answers
+        WHERE question_id IN (
+            SELECT id
+            FROM questions
+            WHERE quiz_id = $1
+        )`
+	if includeIsCorrect {
+		query = `
+        SELECT id, text, question_id, is_correct
+        FROM answers
+        WHERE question_id IN (
+            SELECT id
+            FROM questions
+            WHERE quiz_id = $1
+        )`
+	}
+
+	if err := repo.db.SelectContext(ctx, &answers, query, id); err != nil {
+		return nil, err
+	}
+
+	for i := range questions {
+		for _, answer := range answers {
+			if answer.QuestionId == questions[i].Id {
+				questions[i].Answers = append(questions[i].Answers, answer)
+			}
+		}
+	}
+
+	return questions, nil
+}
+
+func (repo *Repository) Update(ctx context.Context, id int, input domain.Question) error {
+	tx, err := repo.db.Beginx()
+
+	if err != nil {
+		return err
+	}
+
+	err = tx.QueryRowxContext(ctx, `UPDATE questions
+		SET title = COALESCE(NULLIF($1, ''), title),
+		    image = COALESCE(NULLIF($2, ''), image),
+		    type = COALESCE(NULLIF($3, ''))
+		WHERE id = $4`,
+		input.Title, input.Image, input.Type, id).Err()
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, answer := range input.Answers {
+		_, err = tx.ExecContext(ctx, "UPDATE answers SET text = $1, is_correct = $3 WHERE id = $4",
+			answer.Text, answer.IsCorrect, id)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) Delete(ctx context.Context, id int) error {
+	err := repo.db.QueryRowxContext(ctx, "DELETE FROM questions WHERE id = $1", id).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

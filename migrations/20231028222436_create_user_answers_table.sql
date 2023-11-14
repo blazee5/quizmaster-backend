@@ -7,7 +7,7 @@ CREATE TABLE user_answers(
     answer_id   INT     NOT NULL,
     text VARCHAR(255) NOT NULL DEFAULT '',
     FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (question_id) REFERENCES questions (id)
+    FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE
 );
 
 -- +goose StatementEnd

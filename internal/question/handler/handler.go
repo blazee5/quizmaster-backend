@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/question"
+	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"github.com/blazee5/quizmaster-backend/lib/http_utils"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
@@ -86,6 +87,12 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 
 	id, err := h.service.Create(c.Request().Context(), userId, quizId, input)
 
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
 	if err != nil {
 		h.log.Infof("error while create quiz: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -123,4 +130,123 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, questions)
+}
+
+func (h *Handler) UpdateQuestion(c echo.Context) error {
+	var input domain.Question
+
+	userId := c.Get("userId").(int)
+
+	quizId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	questionId, err := strconv.Atoi(c.Param("questionId"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	input.QuizId = quizId
+
+	if err := c.Bind(&input); err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	answers := c.FormValue("answers")
+
+	if answers == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Answers is required field.",
+		})
+	}
+
+	if err := json.Unmarshal([]byte(answers), &input.Answers); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	if _, err := os.Stat("public"); os.IsNotExist(err) {
+		_ = os.Mkdir("public", os.ModePerm)
+	}
+
+	file, err := c.FormFile("image")
+
+	if err == nil {
+		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "server error",
+			})
+		}
+		input.Image = file.Filename
+	}
+
+	err = h.service.Update(c.Request().Context(), questionId, userId, quizId, input)
+
+	if err != nil {
+		h.log.Infof("error while create quiz: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}
+
+func (h *Handler) DeleteQuestion(c echo.Context) error {
+	userId := c.Get("userId").(int)
+	quizId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	questionId, err := strconv.Atoi(c.Param("questionId"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	if _, err := os.Stat("public"); os.IsNotExist(err) {
+		_ = os.Mkdir("public", os.ModePerm)
+	}
+
+	err = h.service.Delete(c.Request().Context(), questionId, userId, quizId)
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while create quiz: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
 }
