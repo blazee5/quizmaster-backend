@@ -4,6 +4,9 @@ import (
 	authHandler "github.com/blazee5/quizmaster-backend/internal/auth/handler"
 	authRepo "github.com/blazee5/quizmaster-backend/internal/auth/repository"
 	authService "github.com/blazee5/quizmaster-backend/internal/auth/service"
+	questionHandler "github.com/blazee5/quizmaster-backend/internal/question/handler"
+	questionRepo "github.com/blazee5/quizmaster-backend/internal/question/repository"
+	questionService "github.com/blazee5/quizmaster-backend/internal/question/service"
 	quizHandler "github.com/blazee5/quizmaster-backend/internal/quiz/handler"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz/repository"
 	quizService "github.com/blazee5/quizmaster-backend/internal/quiz/service"
@@ -65,8 +68,17 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			//quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
 			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
-			quiz.GET("/:id/questions", quizHandlers.GetQuizQuestions, AuthMiddleware)
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
+
+			questionRepos := questionRepo.NewRepository(s.db)
+			questionServices := questionService.NewService(s.log, questionRepos)
+			questionHandlers := questionHandler.NewHandler(s.log, questionServices)
+
+			question := quiz.Group("/:id/question")
+			{
+				question.POST("", questionHandlers.CreateQuestion, AuthMiddleware)
+				question.GET("", questionHandlers.GetQuizQuestions, AuthMiddleware)
+			}
 		}
 	}
 

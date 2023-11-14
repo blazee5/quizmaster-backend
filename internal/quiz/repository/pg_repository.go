@@ -38,49 +38,13 @@ func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
 	return quizzes, nil
 }
 
-func (repo *Repository) Create(ctx context.Context, input domain.Quiz) (int, error) {
+func (repo *Repository) Create(ctx context.Context, userId int, input domain.Quiz) (int, error) {
 	var quizId int
 
-	tx, err := repo.db.Beginx()
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO quizzes (title, description, image, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		input.Title, input.Description, input.Image, userId).Scan(&quizId)
 
 	if err != nil {
-		return 0, err
-	}
-
-	err = tx.QueryRowxContext(ctx, "INSERT INTO quizzes (title, description, image, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
-		input.Title, input.Description, input.Image, input.UserId).Scan(&quizId)
-
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	for _, question := range input.Questions {
-		var questionId int
-		question.QuizId = quizId
-
-		err := tx.QueryRowxContext(ctx, "INSERT INTO questions (title, image, quiz_id, type) VALUES ($1, $2, $3, $4) RETURNING id",
-			question.Title, question.Image, quizId, question.Type).Scan(&questionId)
-
-		if err != nil {
-			tx.Rollback()
-			return 0, err
-		}
-
-		for _, answer := range question.Answers {
-			answer.QuestionId = questionId
-
-			_, err := tx.ExecContext(ctx, "INSERT INTO answers (text, is_correct, question_id) VALUES ($1, $2, $3)",
-				answer.Text, answer.IsCorrect, answer.QuestionId)
-
-			if err != nil {
-				tx.Rollback()
-				return 0, err
-			}
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
 		return 0, err
 	}
 

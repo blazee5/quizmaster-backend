@@ -2,9 +2,7 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
@@ -76,24 +74,7 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 
 	userId := c.Get("userId").(int)
 
-	questions := c.FormValue("questions")
-
-	if questions == "" {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "Questions field is required.",
-		})
-	}
-
-	err := json.Unmarshal([]byte(questions), &input.Questions)
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "Questions is a required field",
-		})
-	}
-
 	if err := c.Bind(&input); err != nil {
-		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "bad request",
 		})
@@ -122,23 +103,7 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		input.Image = file.Filename
 	}
 
-	for idx := range input.Questions {
-		file, err := c.FormFile(fmt.Sprintf("question_img%d", idx+1))
-
-		if err == nil {
-			if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
-				return c.JSON(http.StatusInternalServerError, echo.Map{
-					"message": "server error",
-				})
-			}
-
-			input.Questions[idx].Image = file.Filename
-		}
-	}
-
-	input.UserId = userId
-
-	id, err := h.service.Create(c.Request().Context(), input)
+	id, err := h.service.Create(c.Request().Context(), userId, input)
 
 	if err != nil {
 		h.log.Infof("error while create quiz: %s", err)
@@ -150,33 +115,6 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"id": id,
 	})
-}
-
-func (h *Handler) GetQuizQuestions(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "invalid id",
-		})
-	}
-
-	questions, err := h.service.GetQuestionsById(c.Request().Context(), id)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return c.JSON(http.StatusNotFound, echo.Map{
-			"message": "quiz not found",
-		})
-	}
-
-	if err != nil {
-		h.log.Infof("error while get questions by quiz id: %s", err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "server error",
-		})
-	}
-
-	return c.JSON(http.StatusOK, questions)
 }
 
 func (h *Handler) SaveResult(c echo.Context) error {

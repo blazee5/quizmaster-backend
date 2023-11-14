@@ -53,22 +53,18 @@ func (s *Service) GetById(ctx context.Context, id int) (models.Quiz, error) {
 	return quiz, nil
 }
 
-func (s *Service) Create(ctx context.Context, input domain.Quiz) (int, error) {
-	id, err := s.repo.Create(ctx, input)
+func (s *Service) Create(ctx context.Context, userId int, input domain.Quiz) (int, error) {
+	id, err := s.repo.Create(ctx, userId, input)
 
 	if err != nil {
 		return 0, err
 	}
 
-	if err := s.userRedisRepo.DeleteUserCtx(ctx, strconv.Itoa(input.UserId)); err != nil {
+	if err := s.userRedisRepo.DeleteUserCtx(ctx, strconv.Itoa(userId)); err != nil {
 		return 0, err
 	}
 
 	return id, nil
-}
-
-func (s *Service) GetQuestionsById(ctx context.Context, id int) ([]models.Question, error) {
-	return s.repo.GetQuestionsById(ctx, id, false)
 }
 
 func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input domain.Result) (int, error) {
@@ -189,6 +185,9 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 		}
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
 	return score, nil
 }
