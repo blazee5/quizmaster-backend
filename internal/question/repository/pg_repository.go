@@ -18,31 +18,10 @@ func NewRepository(db *sqlx.DB) *Repository {
 func (repo *Repository) CreateQuestion(ctx context.Context, quizId int, input domain.Question) (int, error) {
 	var id int
 
-	tx, err := repo.db.Beginx()
-
-	if err != nil {
-		return 0, err
-	}
-
-	err = tx.QueryRowxContext(ctx, "INSERT INTO questions (title, image, quiz_id, type) VALUES ($1, $2, $3, $4) RETURNING id",
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (title, image, quiz_id, type) VALUES ($1, $2, $3, $4) RETURNING id",
 		input.Title, input.Image, quizId, input.Type).Scan(&id)
 
 	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	for _, answer := range input.Answers {
-		_, err = tx.ExecContext(ctx, "INSERT INTO answers (text, question_id, is_correct) VALUES ($1, $2, $3)",
-			answer.Text, id, answer.IsCorrect)
-
-		if err != nil {
-			tx.Rollback()
-			return 0, err
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
 		return 0, err
 	}
 
@@ -93,13 +72,7 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 }
 
 func (repo *Repository) Update(ctx context.Context, id int, input domain.Question) error {
-	tx, err := repo.db.Beginx()
-
-	if err != nil {
-		return err
-	}
-
-	err = tx.QueryRowxContext(ctx, `UPDATE questions
+	err := repo.db.QueryRowxContext(ctx, `UPDATE questions
 		SET title = COALESCE(NULLIF($1, ''), title),
 		    image = COALESCE(NULLIF($2, ''), image),
 		    type = COALESCE(NULLIF($3, ''))
@@ -107,21 +80,6 @@ func (repo *Repository) Update(ctx context.Context, id int, input domain.Questio
 		input.Title, input.Image, input.Type, id).Err()
 
 	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	for _, answer := range input.Answers {
-		_, err = tx.ExecContext(ctx, "UPDATE answers SET text = $1, is_correct = $3 WHERE id = $4",
-			answer.Text, answer.IsCorrect, id)
-
-		if err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
 		return err
 	}
 

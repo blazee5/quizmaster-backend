@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/blazee5/quizmaster-backend/internal/quiz"
@@ -170,7 +169,6 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 				}
 
 				for _, ans := range answers {
-					fmt.Println(strings.ToLower(ans.Text))
 					if strings.ToLower(ans.Text) == value && ans.IsCorrect {
 						userCorrectAnswers++
 					}

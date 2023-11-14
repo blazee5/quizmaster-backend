@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -86,10 +85,6 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": response.ValidationError(validateErr),
 		})
-	}
-
-	if _, err := os.Stat("public"); os.IsNotExist(err) {
-		_ = os.Mkdir("public", os.ModePerm)
 	}
 
 	file, err := c.FormFile("image")

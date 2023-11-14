@@ -1,12 +1,10 @@
 package handler
 
 import (
-	"database/sql"
 	"errors"
+	"github.com/blazee5/quizmaster-backend/internal/answer"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
-	"github.com/blazee5/quizmaster-backend/internal/question"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
-	"github.com/blazee5/quizmaster-backend/lib/http_utils"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -17,26 +15,34 @@ import (
 
 type Handler struct {
 	log     *zap.SugaredLogger
-	service question.Service
+	service answer.Service
 }
 
-func NewHandler(log *zap.SugaredLogger, service question.Service) *Handler {
+func NewHandler(log *zap.SugaredLogger, service answer.Service) *Handler {
 	return &Handler{log: log, service: service}
 }
 
-func (h *Handler) CreateQuestion(c echo.Context) error {
-	var input domain.Question
+func (h *Handler) CreateAnswer(c echo.Context) error {
+	var input domain.Answer
 
 	userId := c.Get("userId").(int)
 	quizId, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "bad request",
+			"message": "invalid quiz id",
 		})
 	}
 
-	input.QuizId = quizId
+	questionId, err := strconv.Atoi(c.Param("questionId"))
+
+	input.QuestionId = questionId
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid question id",
+		})
+	}
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -50,17 +56,6 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": response.ValidationError(validateErr),
 		})
-	}
-
-	file, err := c.FormFile("image")
-
-	if err == nil {
-		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
-			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "server error",
-			})
-		}
-		input.Image = file.Filename
 	}
 
 	id, err := h.service.Create(c.Request().Context(), userId, quizId, input)
@@ -83,54 +78,25 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 	})
 }
 
-func (h *Handler) GetQuizQuestions(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "invalid id",
-		})
-	}
-
-	questions, err := h.service.GetQuestionsById(c.Request().Context(), id)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return c.JSON(http.StatusNotFound, echo.Map{
-			"message": "quiz not found",
-		})
-	}
-
-	if err != nil {
-		h.log.Infof("error while get questions by quiz id: %s", err)
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": "server error",
-		})
-	}
-
-	return c.JSON(http.StatusOK, questions)
-}
-
-func (h *Handler) UpdateQuestion(c echo.Context) error {
-	var input domain.Question
+func (h *Handler) UpdateAnswer(c echo.Context) error {
+	var input domain.Answer
 
 	userId := c.Get("userId").(int)
 	quizId, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "bad request",
+			"message": "invalid quiz id",
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	answerId, err := strconv.Atoi(c.Param("answerId"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "invalid id",
+			"message": "invalid answer id",
 		})
 	}
-
-	input.QuizId = quizId
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -146,21 +112,10 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 		})
 	}
 
-	file, err := c.FormFile("image")
-
-	if err == nil {
-		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
-			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "server error",
-			})
-		}
-		input.Image = file.Filename
-	}
-
-	err = h.service.Update(c.Request().Context(), questionId, userId, quizId, input)
+	err = h.service.Update(c.Request().Context(), answerId, userId, quizId, input)
 
 	if err != nil {
-		h.log.Infof("error while update question: %s", err)
+		h.log.Infof("error while update answer: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -169,7 +124,7 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 	return c.String(http.StatusOK, "OK")
 }
 
-func (h *Handler) DeleteQuestion(c echo.Context) error {
+func (h *Handler) DeleteAnswer(c echo.Context) error {
 	userId := c.Get("userId").(int)
 	quizId, err := strconv.Atoi(c.Param("id"))
 
@@ -179,15 +134,15 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	answerId, err := strconv.Atoi(c.Param("answerId"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "invalid question id",
+			"message": "invalid answer id",
 		})
 	}
 
-	err = h.service.Delete(c.Request().Context(), questionId, userId, quizId)
+	err = h.service.Delete(c.Request().Context(), answerId, userId, quizId)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -196,7 +151,7 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 	}
 
 	if err != nil {
-		h.log.Infof("error while delete question: %s", err)
+		h.log.Infof("error while delete answer: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})

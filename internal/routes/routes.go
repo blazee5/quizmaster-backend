@@ -1,6 +1,9 @@
 package routes
 
 import (
+	answerHandler "github.com/blazee5/quizmaster-backend/internal/answer/handler"
+	answerRepo "github.com/blazee5/quizmaster-backend/internal/answer/repository"
+	answerService "github.com/blazee5/quizmaster-backend/internal/answer/service"
 	authHandler "github.com/blazee5/quizmaster-backend/internal/auth/handler"
 	authRepo "github.com/blazee5/quizmaster-backend/internal/auth/repository"
 	authService "github.com/blazee5/quizmaster-backend/internal/auth/service"
@@ -74,12 +77,23 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			questionServices := questionService.NewService(s.log, questionRepos, quizRepos)
 			questionHandlers := questionHandler.NewHandler(s.log, questionServices)
 
-			question := quiz.Group("/:id/questions")
+			question := quiz.Group("/:id/questions", AuthMiddleware)
 			{
-				question.POST("", questionHandlers.CreateQuestion, AuthMiddleware)
-				question.GET("", questionHandlers.GetQuizQuestions, AuthMiddleware)
-				question.PUT("/:questionId", questionHandlers.UpdateQuestion, AuthMiddleware)
-				question.DELETE("/:questionId", questionHandlers.DeleteQuestion, AuthMiddleware)
+				question.POST("", questionHandlers.CreateQuestion)
+				question.GET("", questionHandlers.GetQuizQuestions)
+				question.PUT("/:questionId", questionHandlers.UpdateQuestion)
+				question.DELETE("/:questionId", questionHandlers.DeleteQuestion)
+
+				answerRepos := answerRepo.NewRepository(s.db)
+				answerServices := answerService.NewService(s.log, answerRepos, quizRepos)
+				answerHandlers := answerHandler.NewHandler(s.log, answerServices)
+
+				answer := question.Group("/:questionId/answers")
+				{
+					answer.POST("", answerHandlers.CreateAnswer)
+					answer.PUT("/:answerId", answerHandlers.UpdateAnswer)
+					answer.DELETE("/:answerId", answerHandlers.DeleteAnswer)
+				}
 			}
 		}
 	}

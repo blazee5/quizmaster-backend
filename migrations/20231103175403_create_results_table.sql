@@ -7,8 +7,8 @@ CREATE TABLE results(
     score INT NOT NULL,
     percent INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (quiz_id) REFERENCES quizzes (id),
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (quiz_id) REFERENCES quizzes (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
 

@@ -7,6 +7,10 @@ import (
 )
 
 func UploadFile(file *multipart.FileHeader, destinationPath string) error {
+	if _, err := os.Stat("public"); os.IsNotExist(err) {
+		_ = os.Mkdir("public", os.ModePerm)
+	}
+
 	src, err := file.Open()
 	if err != nil {
 		return err
