@@ -11,6 +11,6 @@ type Service interface {
 	GetQuestionsById(ctx context.Context, id int) ([]models.Question, error)
 	Update(ctx context.Context, id, userId, quizId int, input domain.Question) error
 	Delete(ctx context.Context, id, userId, quizId int) error
-	UploadImage(ctx context.Context, id, userId, quizId int) error
+	UploadImage(ctx context.Context, id, userId, quizId int, filename string) error
 	DeleteImage(ctx context.Context, id, userId, quizId int) error
 }

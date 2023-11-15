@@ -66,12 +66,30 @@ func (s *Service) Delete(ctx context.Context, id, userId, quizId int) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *Service) UploadImage(ctx context.Context, id, userId, quizId int) error {
-	//TODO implement me
-	panic("implement me")
+func (s *Service) UploadImage(ctx context.Context, id, userId, quizId int, filename string) error {
+	quiz, err := s.quizRepo.GetById(ctx, quizId)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserId != userId {
+		return http_errors.PermissionDenied
+	}
+
+	return s.repo.UploadImage(ctx, id, filename)
 }
 
 func (s *Service) DeleteImage(ctx context.Context, id, userId, quizId int) error {
-	//TODO implement me
-	panic("implement me")
+	quiz, err := s.quizRepo.GetById(ctx, quizId)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserId != userId {
+		return http_errors.PermissionDenied
+	}
+
+	return s.repo.DeleteImage(ctx, id)
 }

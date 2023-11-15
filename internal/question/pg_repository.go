@@ -11,4 +11,6 @@ type Repository interface {
 	GetQuestionsById(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error)
 	Update(ctx context.Context, id int, input domain.Question) error
 	Delete(ctx context.Context, id int) error
+	UploadImage(ctx context.Context, id int, filename string) error
+	DeleteImage(ctx context.Context, id int) error
 }

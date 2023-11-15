@@ -94,3 +94,24 @@ func (repo *Repository) Delete(ctx context.Context, id int) error {
 
 	return nil
 }
+
+func (repo *Repository) UploadImage(ctx context.Context, id int, filename string) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE questions SET image = $1 WHERE id = $2", filename, id).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) DeleteImage(ctx context.Context, id int) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE questions SET image = null WHERE id = $1", id).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

@@ -16,6 +16,7 @@ import (
 	userHandler "github.com/blazee5/quizmaster-backend/internal/user/handler"
 	userRepo "github.com/blazee5/quizmaster-backend/internal/user/repository"
 	userService "github.com/blazee5/quizmaster-backend/internal/user/service"
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
@@ -23,13 +24,14 @@ import (
 )
 
 type Server struct {
-	log *zap.SugaredLogger
-	db  *sqlx.DB
-	rdb *redis.Client
+	log      *zap.SugaredLogger
+	db       *sqlx.DB
+	rdb      *redis.Client
+	esclient *elasticsearch.Client
 }
 
-func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client) *Server {
-	return &Server{log: log, db: db, rdb: rdb}
+func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esclient *elasticsearch.Client) *Server {
+	return &Server{log: log, db: db, rdb: rdb, esclient: esclient}
 }
 
 func (s *Server) InitRoutes(e *echo.Echo) {
@@ -68,7 +70,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		{
 			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
 			quiz.GET("", quizHandlers.GetAllQuizzes)
-			//quiz.GET("/search", quizHandlers.SearchByTitle)
+			// quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
 			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
@@ -80,9 +82,11 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			question := quiz.Group("/:id/questions", AuthMiddleware)
 			{
 				question.POST("", questionHandlers.CreateQuestion)
+				question.POST("/:questionId/image", questionHandlers.UploadImage)
 				question.GET("", questionHandlers.GetQuizQuestions)
 				question.PUT("/:questionId", questionHandlers.UpdateQuestion)
 				question.DELETE("/:questionId", questionHandlers.DeleteQuestion)
+				question.DELETE("/:questionId/image", questionHandlers.DeleteImage)
 
 				answerRepos := answerRepo.NewRepository(s.db)
 				answerServices := answerService.NewService(s.log, answerRepos, quizRepos)
