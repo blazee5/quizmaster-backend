@@ -15,11 +15,11 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) CreateQuestion(ctx context.Context, quizId int, input domain.Question) (int, error) {
+func (repo *Repository) CreateQuestion(ctx context.Context, quizId int) (int, error) {
 	var id int
 
-	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (title, image, quiz_id, type) VALUES ($1, $2, $3, $4) RETURNING id",
-		input.Title, input.Image, quizId, input.Type).Scan(&id)
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (quiz_id) VALUES ($1) RETURNING id",
+		quizId).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -74,10 +74,9 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 func (repo *Repository) Update(ctx context.Context, id int, input domain.Question) error {
 	err := repo.db.QueryRowxContext(ctx, `UPDATE questions
 		SET title = COALESCE(NULLIF($1, ''), title),
-		    image = COALESCE(NULLIF($2, ''), image),
-		    type = COALESCE(NULLIF($3, ''))
-		WHERE id = $4`,
-		input.Title, input.Image, input.Type, id).Err()
+		    type = COALESCE(NULLIF($2, ''), type)
+		WHERE id = $3`,
+		input.Title, input.Type, id).Err()
 
 	if err != nil {
 		return err

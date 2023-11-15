@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE questions(
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(255),
     image VARCHAR(255),
     quiz_id int NOT NULL,
     type VARCHAR(255) NOT NULL DEFAULT 'choice',

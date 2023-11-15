@@ -1,8 +1,7 @@
 package domain
 
 type Question struct {
-	Title  string `form:"title" validate:"required"`
-	Image  string `form:"image"`
-	Type   string `form:"type" validate:"required,oneof=choice input"`
+	Title  string `json:"title" validate:"required"`
+	Type   string `json:"type" validate:"required,oneof=choice input"`
 	QuizId int
 }

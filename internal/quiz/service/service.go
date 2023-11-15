@@ -85,7 +85,9 @@ func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input doma
 		return 0, err
 	}
 
-	err = s.repo.SaveResult(ctx, userId, quizId, int(score), int(score/float64(len(totalQuestions))*100))
+	percent := score / float64(len(totalQuestions)) * 100
+
+	err = s.repo.SaveResult(ctx, userId, quizId, int(score), int(percent))
 
 	if err != nil {
 		return 0, err
@@ -131,8 +133,7 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 		}
 
 		if questionType == "choice" {
-			switch value := answer.(type) {
-			case []interface{}:
+			if value, ok := answer.([]interface{}); ok {
 				for _, answerId := range value {
 					ans, err := s.repo.GetAnswerById(ctx, int(answerId.(float64)))
 
@@ -154,26 +155,20 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 				}
 			}
 		} else {
-			switch value := answer.(type) {
-			case string:
+			if value, ok := answer.(string); ok {
 				answers, err := s.repo.GetAnswersById(ctx, questionId)
-
 				if err != nil {
 					return 0, err
 				}
-
 				err = s.repo.SaveUserAnswer(ctx, tx, userId, questionId, 0, value)
-
 				if err != nil {
 					return 0, err
 				}
-
 				for _, ans := range answers {
 					if strings.ToLower(ans.Text) == value && ans.IsCorrect {
 						userCorrectAnswers++
 					}
 				}
-
 				totalUserAnswers++
 			}
 		}
