@@ -5,6 +5,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/routes"
 	"github.com/blazee5/quizmaster-backend/lib/db/postgres"
 	"github.com/blazee5/quizmaster-backend/lib/db/redis"
+	elastic2 "github.com/blazee5/quizmaster-backend/lib/elastic"
 	"github.com/blazee5/quizmaster-backend/lib/logger"
 	libValidator "github.com/blazee5/quizmaster-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
@@ -26,15 +27,17 @@ func main() {
 	log := logger.NewLogger()
 	db := postgres.New()
 	rdb := redis.NewRedisClient()
+	esclient := elastic2.NewElasticSearchClient()
 
 	e := echo.New()
+	//e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
-	server := routes.NewServer(log, db, rdb)
+	server := routes.NewServer(log, db, rdb, esclient)
 	server.InitRoutes(e)
 
 	log.Fatal(e.Start(os.Getenv("PORT")))
