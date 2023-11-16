@@ -155,6 +155,12 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 		})
 	}
 
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
 	if err != nil {
 		h.log.Infof("error while delete question: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -200,6 +206,18 @@ func (h *Handler) UploadImage(c echo.Context) error {
 
 	err = h.service.UploadImage(c.Request().Context(), questionId, userId, quizId, file.Filename)
 
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
@@ -238,6 +256,18 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 	}
 
 	err = h.service.DeleteImage(c.Request().Context(), questionId, userId, quizId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{

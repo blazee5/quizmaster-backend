@@ -7,4 +7,5 @@ type Question struct {
 	Answers []Answer `json:"answers" db:"answers"`
 	QuizId  int      `json:"quiz_id" db:"quiz_id"`
 	Type    string   `json:"type" db:"type"`
+	OrderId float64  `json:"order_id" db:"order_id"`
 }

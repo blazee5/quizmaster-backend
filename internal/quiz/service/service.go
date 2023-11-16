@@ -64,9 +64,9 @@ func (s *Service) Create(ctx context.Context, userId int, input domain.Quiz) (in
 		return 0, err
 	}
 
-	//if err := s.elasticRepo.CreateIndex(ctx, input); err != nil {
-	//	return 0, err
-	//}
+	if err := s.elasticRepo.CreateIndex(ctx, input); err != nil {
+		return 0, err
+	}
 
 	return id, nil
 }
