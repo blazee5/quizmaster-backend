@@ -184,3 +184,31 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 
 	return score, nil
 }
+
+func (s *Service) UploadImage(ctx context.Context, userId, quizId int, filename string) error {
+	quiz, err := s.repo.GetById(ctx, quizId)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserId != userId {
+		return http_errors.PermissionDenied
+	}
+
+	return s.repo.UploadImage(ctx, quizId, filename)
+}
+
+func (s *Service) DeleteImage(ctx context.Context, userId, quizId int) error {
+	quiz, err := s.repo.GetById(ctx, quizId)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserId != userId {
+		return http_errors.PermissionDenied
+	}
+
+	return s.repo.DeleteImage(ctx, quizId)
+}

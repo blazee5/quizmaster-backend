@@ -6,7 +6,7 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, userId, quizId int, input domain.Answer) (int, error)
+	Create(ctx context.Context, userId, quizId, questionId int) (int, error)
 	Update(ctx context.Context, answerId, userId, quizId int, input domain.Answer) error
 	Delete(ctx context.Context, answerId, userId, quizId int) error
 }

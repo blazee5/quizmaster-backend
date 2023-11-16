@@ -69,11 +69,13 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		quiz := e.Group("/quiz")
 		{
 			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
+			quiz.POST("/:id/image", quizHandlers.UploadImage, AuthMiddleware)
 			quiz.GET("", quizHandlers.GetAllQuizzes)
 			// quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
 			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
+			quiz.DELETE("/:id/image", quizHandlers.DeleteImage, AuthMiddleware)
 
 			questionRepos := questionRepo.NewRepository(s.db)
 			questionServices := questionService.NewService(s.log, questionRepos, quizRepos)

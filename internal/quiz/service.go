@@ -12,4 +12,6 @@ type Service interface {
 	GetById(ctx context.Context, id int) (models.Quiz, error)
 	SaveResult(ctx context.Context, userId int, quizId int, input domain.Result) (int, error)
 	Delete(ctx context.Context, userId, quizId int) error
+	UploadImage(ctx context.Context, userId, quizId int, filename string) error
+	DeleteImage(ctx context.Context, userId, quizId int) error
 }

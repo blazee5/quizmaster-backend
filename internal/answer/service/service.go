@@ -19,7 +19,7 @@ func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRep
 	return &Service{log: log, repo: repo, quizRepo: quizRepo}
 }
 
-func (s *Service) Create(ctx context.Context, userId, quizId int, input domain.Answer) (int, error) {
+func (s *Service) Create(ctx context.Context, userId, quizId, questionId int) (int, error) {
 	quiz, err := s.quizRepo.GetById(ctx, quizId)
 
 	if err != nil {
@@ -30,7 +30,7 @@ func (s *Service) Create(ctx context.Context, userId, quizId int, input domain.A
 		return 0, http_errors.PermissionDenied
 	}
 
-	return s.repo.Create(ctx, input)
+	return s.repo.Create(ctx, questionId)
 }
 
 func (s *Service) Update(ctx context.Context, answerId, userId, quizId int, input domain.Answer) error {

@@ -20,4 +20,6 @@ type Repository interface {
 	GetAnswersById(ctx context.Context, id int) ([]models.Answer, error)
 	GetQuestionType(ctx context.Context, id int) (string, error)
 	NewTx() (*sqlx.Tx, error)
+	UploadImage(ctx context.Context, id int, filename string) error
+	DeleteImage(ctx context.Context, id int) error
 }

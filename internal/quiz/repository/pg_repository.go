@@ -41,8 +41,8 @@ func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
 func (repo *Repository) Create(ctx context.Context, userId int, input domain.Quiz) (int, error) {
 	var quizId int
 
-	err := repo.db.QueryRowxContext(ctx, "INSERT INTO quizzes (title, description, image, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
-		input.Title, input.Description, input.Image, userId).Scan(&quizId)
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO quizzes (title, description, user_id) VALUES ($1, $2, $3) RETURNING id",
+		input.Title, input.Description, userId).Scan(&quizId)
 
 	if err != nil {
 		return 0, err
@@ -190,4 +190,25 @@ func (repo *Repository) SaveResult(ctx context.Context, userId, quizId int, scor
 	}
 
 	return nil
+}
+
+func (repo *Repository) UploadImage(ctx context.Context, id int, filename string) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE quizzes SET image = $1 WHERE id = $2", filename, id).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) DeleteImage(ctx context.Context, id int) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE quizzes SET image = null WHERE id = $1", id).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }

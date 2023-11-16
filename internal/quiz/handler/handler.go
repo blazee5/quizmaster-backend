@@ -87,17 +87,6 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		})
 	}
 
-	file, err := c.FormFile("image")
-
-	if err == nil {
-		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
-			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "server error",
-			})
-		}
-		input.Image = file.Filename
-	}
-
 	id, err := h.service.Create(c.Request().Context(), userId, input)
 
 	if err != nil {
@@ -190,4 +179,71 @@ func (h *Handler) DeleteQuiz(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, "sucess")
+}
+
+func (h *Handler) UploadImage(c echo.Context) error {
+	userId := c.Get("userId").(int)
+	quizId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid quiz id",
+		})
+	}
+
+	file, err := c.FormFile("image")
+
+	if err == nil {
+		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
+			h.log.Infof("error while save question image: %v", err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "server error",
+			})
+		}
+	} else {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "image is required",
+		})
+	}
+
+	err = h.service.UploadImage(c.Request().Context(), userId, quizId, file.Filename)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}
+
+func (h *Handler) DeleteImage(c echo.Context) error {
+	userId := c.Get("userId").(int)
+	quizId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid quiz id",
+		})
+	}
+
+	file, err := c.FormFile("image")
+
+	if err == nil {
+		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "server error",
+			})
+		}
+	}
+
+	err = h.service.DeleteImage(c.Request().Context(), userId, quizId)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
 }
