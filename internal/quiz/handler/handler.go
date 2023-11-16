@@ -147,6 +147,56 @@ func (h *Handler) SaveResult(c echo.Context) error {
 	})
 }
 
+func (h *Handler) UpdateQuiz(c echo.Context) error {
+	var input domain.Quiz
+
+	id, err := strconv.Atoi(c.Param("id"))
+	userId := c.Get("userId").(int)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err = h.service.Update(c.Request().Context(), userId, id, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while update quiz: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}
+
 func (h *Handler) DeleteQuiz(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	userId := c.Get("userId").(int)

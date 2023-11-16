@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE answers(
     id SERIAL PRIMARY KEY,
-    text VARCHAR(255),
+    text VARCHAR(255) default '',
     question_id int NOT NULL,
     is_correct BOOLEAN DEFAULT false,
     order_id FLOAT,

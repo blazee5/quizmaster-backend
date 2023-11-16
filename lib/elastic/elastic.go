@@ -1,44 +1,22 @@
 package elastic
 
 import (
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
+	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
-	"net/http"
-	"os"
+	"go.uber.org/zap"
 )
 
-type BulkIndexerConfig struct {
-	NumWorkers           int `mapstructure:"numWorkers" validate:"required"`
-	FlushBytes           int `mapstructure:"flushBytes" validate:"required"`
-	FlushIntervalSeconds int `mapstructure:"flushIntervalSeconds" validate:"required"`
-	TimeoutMilliseconds  int `mapstructure:"timeoutMilliseconds" validate:"required"`
-}
-
-type Config struct {
-	Addresses []string
-	Username  string
-	Password  string
-
-	APIKey        string
-	Header        http.Header
-	EnableLogging bool
-}
-
-func NewElasticSearchClient() *elasticsearch.Client {
-
-	config := elasticsearch.Config{
-		Addresses: []string{},
-		Username:  os.Getenv("ELASTIC_USER"),
-		APIKey:    os.Getenv("ELASTIC_API_KEY"),
-		Header:    http.Header{},
-		Logger:    &elastictransport.ColorLogger{Output: os.Stdout, EnableRequestBody: true, EnableResponseBody: true},
-	}
-
-	client, err := elasticsearch.NewClient(config)
-
+func NewElasticSearchClient(log *zap.SugaredLogger) *elasticsearch.Client {
+	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
-		panic(err)
+		fmt.Println("error while connect to elasticsearch")
 	}
 
-	return client
+	//res, err := es.Info()
+	//if err != nil {
+	//	fmt.Printf("Error getting response: %s", err)
+	//}
+	//defer res.Body.Close()
+
+	return es
 }

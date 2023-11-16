@@ -63,7 +63,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 		quizRepos := quizRepo.NewRepository(s.db)
 		quizRedisRepo := quizRepo.NewAuthRedisRepo(s.rdb)
-		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo)
+		quizElasticRepo := quizRepo.NewElasticRepository(s.esclient)
+		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
 
 		quiz := e.Group("/quiz")
@@ -73,6 +74,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			quiz.GET("", quizHandlers.GetAllQuizzes)
 			// quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
+			quiz.PUT("/:id", quizHandlers.UpdateQuiz, AuthMiddleware)
 			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
 			quiz.DELETE("/:id/image", quizHandlers.DeleteImage, AuthMiddleware)

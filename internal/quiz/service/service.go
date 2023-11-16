@@ -18,10 +18,11 @@ type Service struct {
 	repo          quiz.Repository
 	quizRedisRepo quiz.RedisRepository
 	userRedisRepo user.RedisRepository
+	elasticRepo   quiz.ElasticRepository
 }
 
-func NewService(log *zap.SugaredLogger, repo quiz.Repository, quizRedisRepo quiz.RedisRepository, userRedisRepo user.RedisRepository) *Service {
-	return &Service{log: log, repo: repo, quizRedisRepo: quizRedisRepo, userRedisRepo: userRedisRepo}
+func NewService(log *zap.SugaredLogger, repo quiz.Repository, quizRedisRepo quiz.RedisRepository, userRedisRepo user.RedisRepository, elasticRepo quiz.ElasticRepository) *Service {
+	return &Service{log: log, repo: repo, quizRedisRepo: quizRedisRepo, userRedisRepo: userRedisRepo, elasticRepo: elasticRepo}
 }
 
 func (s *Service) GetAll(ctx context.Context) ([]models.Quiz, error) {
@@ -63,6 +64,10 @@ func (s *Service) Create(ctx context.Context, userId int, input domain.Quiz) (in
 		return 0, err
 	}
 
+	//if err := s.elasticRepo.CreateIndex(ctx, input); err != nil {
+	//	return 0, err
+	//}
+
 	return id, nil
 }
 
@@ -98,6 +103,20 @@ func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input doma
 	}
 
 	return int(score), nil
+}
+
+func (s *Service) Update(ctx context.Context, userId, quizId int, input domain.Quiz) error {
+	quiz, err := s.repo.GetById(ctx, quizId)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserId != userId {
+		return http_errors.PermissionDenied
+	}
+
+	return s.repo.Update(ctx, quizId, input)
 }
 
 func (s *Service) Delete(ctx context.Context, userId, quizId int) error {

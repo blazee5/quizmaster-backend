@@ -14,6 +14,7 @@ type Repository interface {
 	Create(ctx context.Context, userId int, input domain.Quiz) (int, error)
 	SaveResult(ctx context.Context, userId, quizId int, score, percent int) error
 	SaveUserAnswer(ctx context.Context, tx *sqlx.Tx, userId, questionId, answerId int, answerText string) error
+	Update(ctx context.Context, quizId int, input domain.Quiz) error
 	Delete(ctx context.Context, quizId int) error
 	GetQuestionsById(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error)
 	GetAnswerById(ctx context.Context, id int) (models.Answer, error)

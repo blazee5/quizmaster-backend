@@ -106,6 +106,19 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 	return questions, nil
 }
 
+func (repo *Repository) Update(ctx context.Context, quizId int, input domain.Quiz) error {
+	err := repo.db.QueryRowxContext(ctx, `UPDATE quizzes SET
+		title = COALESCE(NULLIF($1, ''), title),
+		description = COALESCE(NULLIF($2, ''), description) WHERE id = $3`,
+		input.Title, input.Description, quizId).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo *Repository) Delete(ctx context.Context, id int) error {
 	res, err := repo.db.ExecContext(ctx, "DELETE FROM quizzes WHERE id = $1", id)
 
