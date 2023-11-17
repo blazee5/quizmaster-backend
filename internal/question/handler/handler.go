@@ -36,6 +36,12 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 
 	id, err := h.service.Create(c.Request().Context(), userId, quizId)
 
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
@@ -73,6 +79,40 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while get questions by quiz id: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, questions)
+}
+
+func (h *Handler) GetAllQuizQuestions(c echo.Context) error {
+	userId := c.Get("userId").(int)
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	questions, err := h.service.GetAllQuestionsById(c.Request().Context(), id, userId)
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while get all questions by quiz id: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})

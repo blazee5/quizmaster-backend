@@ -88,6 +88,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				question.POST("", questionHandlers.CreateQuestion)
 				question.POST("/:questionId/image", questionHandlers.UploadImage)
 				question.GET("", questionHandlers.GetQuizQuestions)
+				question.GET("/all", questionHandlers.GetAllQuizQuestions)
 				question.PUT("/:questionId", questionHandlers.UpdateQuestion)
 				question.DELETE("/:questionId", questionHandlers.DeleteQuestion)
 				question.DELETE("/:questionId/image", questionHandlers.DeleteImage)
