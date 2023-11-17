@@ -105,7 +105,7 @@ func (repo *Repository) GetQuestionsWithAnswers(ctx context.Context, id int) ([]
 
 func (repo *Repository) Update(ctx context.Context, id int, input domain.Question) error {
 	err := repo.db.QueryRowxContext(ctx, `UPDATE questions
-		SET title = COALESCE(NULLIF($1, ''), title),
+		SET title = $1,
 		    type = COALESCE(NULLIF($2, ''), type)
 		WHERE id = $3`,
 		input.Title, input.Type, id).Err()

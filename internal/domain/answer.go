@@ -1,7 +1,7 @@
 package domain
 
 type Answer struct {
-	Text       string `json:"text" validate:"required"`
+	Text       string `json:"text"`
 	IsCorrect  bool   `json:"is_correct"`
 	QuestionId int
 }

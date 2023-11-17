@@ -29,7 +29,7 @@ func (repo *Repository) Create(ctx context.Context, questionId int) (int, error)
 
 func (repo *Repository) Update(ctx context.Context, answerId int, input domain.Answer) error {
 	err := repo.db.QueryRowxContext(ctx, `UPDATE answers SET
-		text = COALESCE(NULLIF($1, ''), text),
+		text = $1,
 		is_correct = $2
 		WHERE id = $3`,
 		input.Text, input.IsCorrect, answerId).Err()
