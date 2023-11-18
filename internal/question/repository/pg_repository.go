@@ -138,7 +138,7 @@ func (repo *Repository) UploadImage(ctx context.Context, id int, filename string
 }
 
 func (repo *Repository) DeleteImage(ctx context.Context, id int) error {
-	err := repo.db.QueryRowxContext(ctx, "UPDATE questions SET image = null WHERE id = $1", id).Err()
+	err := repo.db.QueryRowxContext(ctx, "UPDATE questions SET image = '' WHERE id = $1", id).Err()
 
 	if err != nil {
 		return err
