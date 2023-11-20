@@ -1,6 +1,9 @@
 package routes
 
 import (
+	adminAuthHandler "github.com/blazee5/quizmaster-backend/internal/admin/auth/handler"
+	adminAuthRepo "github.com/blazee5/quizmaster-backend/internal/admin/auth/repository"
+	adminAuthService "github.com/blazee5/quizmaster-backend/internal/admin/auth/service"
 	adminUserHandler "github.com/blazee5/quizmaster-backend/internal/admin/user/handler"
 	adminUserRepo "github.com/blazee5/quizmaster-backend/internal/admin/user/repository"
 	adminUserService "github.com/blazee5/quizmaster-backend/internal/admin/user/service"
@@ -112,21 +115,20 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 	admin := e.Group("/admin")
 	{
+		adminAuthRepos := adminAuthRepo.NewRepository(s.db)
+		adminAuthServices := adminAuthService.NewService(s.log, adminAuthRepos)
+		adminAuthHandlers := adminAuthHandler.NewHandler(s.log, adminAuthServices)
+
 		auth := admin.Group("/auth")
 		{
-			auth.POST("/signup", func(c echo.Context) error {
-				return nil
-			})
-			auth.POST("/signin", func(c echo.Context) error {
-				return nil
-			})
+			auth.POST("/signin", adminAuthHandlers.SignInAdmin)
 		}
 
 		adminUserRepos := adminUserRepo.NewRepository(s.db)
 		adminUserServices := adminUserService.NewService(s.log, adminUserRepos)
 		adminUserHandlers := adminUserHandler.NewHandler(s.log, adminUserServices)
 
-		users := admin.Group("/users")
+		users := admin.Group("/users", AdminMiddleware)
 		{
 			users.GET("", adminUserHandlers.GetUsers)
 			users.POST("", adminUserHandlers.CreateUser)

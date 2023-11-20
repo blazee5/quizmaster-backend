@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/blazee5/quizmaster-backend/internal/auth"
+	adminAuthRepo "github.com/blazee5/quizmaster-backend/internal/admin/auth"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	authLib "github.com/blazee5/quizmaster-backend/lib/auth"
 	"go.uber.org/zap"
@@ -10,16 +10,11 @@ import (
 
 type Service struct {
 	log  *zap.SugaredLogger
-	repo auth.Repository
+	repo adminAuthRepo.Repository
 }
 
-func NewService(log *zap.SugaredLogger, repo auth.Repository) *Service {
+func NewService(log *zap.SugaredLogger, repo adminAuthRepo.Repository) *Service {
 	return &Service{log: log, repo: repo}
-}
-
-func (s *Service) SignUp(ctx context.Context, input domain.SignUpRequest) (int, error) {
-	input.Password = authLib.GenerateHashPassword(input.Password)
-	return s.repo.CreateUser(ctx, input)
 }
 
 func (s *Service) GenerateToken(ctx context.Context, input domain.SignInRequest) (string, error) {
