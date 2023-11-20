@@ -1,6 +1,9 @@
 package routes
 
 import (
+	adminUserHandler "github.com/blazee5/quizmaster-backend/internal/admin/user/handler"
+	adminUserRepo "github.com/blazee5/quizmaster-backend/internal/admin/user/repository"
+	adminUserService "github.com/blazee5/quizmaster-backend/internal/admin/user/service"
 	answerHandler "github.com/blazee5/quizmaster-backend/internal/answer/handler"
 	answerRepo "github.com/blazee5/quizmaster-backend/internal/answer/repository"
 	answerService "github.com/blazee5/quizmaster-backend/internal/answer/service"
@@ -105,6 +108,33 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				}
 			}
 		}
+	}
+
+	admin := e.Group("/admin")
+	{
+		auth := admin.Group("/auth")
+		{
+			auth.POST("/signup", func(c echo.Context) error {
+				return nil
+			})
+			auth.POST("/signin", func(c echo.Context) error {
+				return nil
+			})
+		}
+
+		adminUserRepos := adminUserRepo.NewRepository(s.db)
+		adminUserServices := adminUserService.NewService(s.log, adminUserRepos)
+		adminUserHandlers := adminUserHandler.NewHandler(s.log, adminUserServices)
+
+		users := admin.Group("/users")
+		{
+			users.GET("", adminUserHandlers.GetUsers)
+			users.POST("", adminUserHandlers.CreateUser)
+			users.PUT("/:userId", adminUserHandlers.UpdateUser)
+			users.DELETE("/:userId", adminUserHandlers.DeleteUser)
+		}
+
+		admin.GET("", adminUserHandlers.GetUsers)
 	}
 
 	e.Static("/public", "public")
