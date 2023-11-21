@@ -4,6 +4,9 @@ import (
 	adminAuthHandler "github.com/blazee5/quizmaster-backend/internal/admin/auth/handler"
 	adminAuthRepo "github.com/blazee5/quizmaster-backend/internal/admin/auth/repository"
 	adminAuthService "github.com/blazee5/quizmaster-backend/internal/admin/auth/service"
+	adminQuizHandler "github.com/blazee5/quizmaster-backend/internal/admin/quiz/handler"
+	adminQuizRepo "github.com/blazee5/quizmaster-backend/internal/admin/quiz/repository"
+	adminQuizService "github.com/blazee5/quizmaster-backend/internal/admin/quiz/service"
 	adminUserHandler "github.com/blazee5/quizmaster-backend/internal/admin/user/handler"
 	adminUserRepo "github.com/blazee5/quizmaster-backend/internal/admin/user/repository"
 	adminUserService "github.com/blazee5/quizmaster-backend/internal/admin/user/service"
@@ -134,6 +137,18 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			users.POST("", adminUserHandlers.CreateUser)
 			users.PUT("/:userId", adminUserHandlers.UpdateUser)
 			users.DELETE("/:userId", adminUserHandlers.DeleteUser)
+		}
+
+		adminQuizRepos := adminQuizRepo.NewRepository(s.db)
+		adminQuizServices := adminQuizService.NewService(s.log, adminQuizRepos)
+		adminQuizHandlers := adminQuizHandler.NewHandler(s.log, adminQuizServices)
+
+		quizzes := admin.Group("/quizzes", AdminMiddleware)
+		{
+			quizzes.GET("", adminQuizHandlers.GetQuizzes)
+			quizzes.POST("", adminQuizHandlers.CreateQuiz)
+			quizzes.PUT("/:quizId", adminQuizHandlers.UpdateQuiz)
+			quizzes.DELETE("/:quizId", adminQuizHandlers.DeleteQuiz)
 		}
 
 		admin.GET("", adminUserHandlers.GetUsers)
