@@ -1,0 +1,155 @@
+basePath: /
+definitions:
+  domain.Question:
+    properties:
+      quizID:
+        type: integer
+      title:
+        type: string
+      type:
+        enum:
+        - choice
+        - input
+        type: string
+    required:
+    - type
+    type: object
+  domain.SignInRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  domain.SignUpRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      username:
+        minLength: 2
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a QuizMaster backend docs.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: QuizMaster Backend API
+  version: "1.0"
+paths:
+  /api/question:
+    post:
+      consumes:
+      - application/json
+      description: create question
+      operationId: create-question
+      parameters:
+      - description: question
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Question'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create question
+      tags:
+      - question
+  /auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Sign in
+      operationId: sign-in
+      parameters:
+      - description: user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Sign in
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Sign up
+      operationId: sign-up
+      parameters:
+      - description: user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Sign up
+      tags:
+      - auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: cookie
+    name: token
+    type: apiKey
+swagger: "2.0"
