@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
+	"github.com/blazee5/quizmaster-backend/internal/question"
 	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/internal/user"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
@@ -16,6 +17,7 @@ import (
 type Service struct {
 	log           *zap.SugaredLogger
 	repo          quiz.Repository
+	questionRepo  question.Repository
 	quizRedisRepo quiz.RedisRepository
 	userRedisRepo user.RedisRepository
 	elasticRepo   quiz.ElasticRepository
@@ -72,7 +74,7 @@ func (s *Service) Create(ctx context.Context, userID int, input domain.Quiz) (in
 }
 
 func (s *Service) SaveResult(ctx context.Context, userID, quizID int, input domain.Result) (int, error) {
-	totalQuestions, err := s.repo.GetQuestionsByID(ctx, quizID, false)
+	totalQuestions, err := s.questionRepo.GetQuestionsByID(ctx, quizID)
 
 	if err != nil {
 		return 0, err
@@ -133,7 +135,11 @@ func (s *Service) Delete(ctx context.Context, userID, quizID int) error {
 	return s.repo.Delete(ctx, quizID)
 }
 
-func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userID int, input domain.Result) (float64, error) {
+func (s *Service) SaveResultProcess(
+	ctx context.Context,
+	tx *sqlx.Tx, userID int,
+	input domain.Result,
+) (float64, error) {
 	var score float64
 
 	for questionID, answer := range input.Answers {
@@ -176,13 +182,17 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userID int
 		} else {
 			if value, ok := answer.(string); ok {
 				answers, err := s.repo.GetAnswersByID(ctx, questionID)
+
 				if err != nil {
 					return 0, err
 				}
+
 				err = s.repo.SaveUserAnswer(ctx, tx, userID, questionID, 0, value)
+
 				if err != nil {
 					return 0, err
 				}
+
 				for _, ans := range answers {
 					if strings.ToLower(ans.Text) == value && ans.IsCorrect {
 						userCorrectAnswers++

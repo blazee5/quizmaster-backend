@@ -63,49 +63,6 @@ func (repo *Repository) GetByID(ctx context.Context, id int) (models.Quiz, error
 	return quiz, nil
 }
 
-func (repo *Repository) GetQuestionsByID(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error) {
-	questions := make([]models.Question, 0)
-
-	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
-		return nil, err
-	}
-
-	answers := make([]models.Answer, 0)
-
-	query := `
-        SELECT id, text, question_id
-        FROM answers
-        WHERE question_id IN (
-            SELECT id
-            FROM questions
-            WHERE quiz_id = $1
-        )`
-	if includeIsCorrect {
-		query = `
-        SELECT id, text, question_id, is_correct
-        FROM answers
-        WHERE question_id IN (
-            SELECT id
-            FROM questions
-            WHERE quiz_id = $1
-        )`
-	}
-
-	if err := repo.db.SelectContext(ctx, &answers, query, id); err != nil {
-		return nil, err
-	}
-
-	for i := range questions {
-		for _, answer := range answers {
-			if answer.QuestionID == questions[i].ID {
-				questions[i].Answers = append(questions[i].Answers, answer)
-			}
-		}
-	}
-
-	return questions, nil
-}
-
 func (repo *Repository) Update(ctx context.Context, quizID int, input domain.Quiz) error {
 	err := repo.db.QueryRowxContext(ctx, `UPDATE quizzes SET
 		title = COALESCE(NULLIF($1, ''), title),

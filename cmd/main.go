@@ -9,7 +9,6 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/logger"
 	libValidator "github.com/blazee5/quizmaster-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/swaggo/echo-swagger"
@@ -41,10 +40,10 @@ import (
 // @name token
 // @tag.name auth
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
+	//err := godotenv.Load()
+	//if err != nil {
+	//	panic("Error loading .env file")
+	//}
 
 	log := logger.NewLogger()
 	db := postgres.New()
