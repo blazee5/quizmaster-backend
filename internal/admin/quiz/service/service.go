@@ -17,8 +17,8 @@ func NewService(log *zap.SugaredLogger, repo adminQuizRepo.Repository) *Service 
 	return &Service{log: log, repo: repo}
 }
 
-func (s *Service) CreateQuiz(ctx context.Context, userId int, input domain.Quiz) (int, error) {
-	return s.repo.Create(ctx, userId, input)
+func (s *Service) CreateQuiz(ctx context.Context, userID int, input domain.Quiz) (int, error) {
+	return s.repo.Create(ctx, userID, input)
 }
 
 func (s *Service) GetQuizzes(ctx context.Context) ([]models.Quiz, error) {

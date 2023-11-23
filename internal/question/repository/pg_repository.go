@@ -16,11 +16,11 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) CreateQuestion(ctx context.Context, quizId int) (int, error) {
+func (repo *Repository) CreateQuestion(ctx context.Context, quizID int) (int, error) {
 	var id int
 
 	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (quiz_id) VALUES ($1) RETURNING id",
-		quizId).Scan(&id)
+		quizID).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -29,7 +29,7 @@ func (repo *Repository) CreateQuestion(ctx context.Context, quizId int) (int, er
 	return id, nil
 }
 
-func (repo *Repository) GetQuestionsById(ctx context.Context, id int) ([]models.Question, error) {
+func (repo *Repository) GetQuestionsByID(ctx context.Context, id int) ([]models.Question, error) {
 	questions := make([]models.Question, 0)
 
 	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
@@ -57,7 +57,7 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int) ([]models.
 
 	for i := range questions {
 		for _, answer := range answers {
-			if answer.QuestionId == questions[i].Id {
+			if answer.QuestionID == questions[i].ID {
 				questions[i].Answers = append(questions[i].Answers, answer)
 			}
 		}
@@ -94,7 +94,7 @@ func (repo *Repository) GetQuestionsWithAnswers(ctx context.Context, id int) ([]
 
 	for i := range questions {
 		for _, answer := range answers {
-			if answer.QuestionId == questions[i].Id {
+			if answer.QuestionID == questions[i].ID {
 				questions[i].Answers = append(questions[i].Answers, answer)
 			}
 		}

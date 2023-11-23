@@ -25,5 +25,5 @@ func (s *Service) GenerateToken(ctx context.Context, input domain.SignInRequest)
 		return "", err
 	}
 
-	return authLib.GenerateToken(user.Id, user.RoleId)
+	return authLib.GenerateToken(user.ID, user.RoleID)
 }

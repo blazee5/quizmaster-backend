@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/blazee5/quizmaster-backend/internal/auth"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
+	authLib "github.com/blazee5/quizmaster-backend/lib/auth"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,18 @@ func NewHandler(log *zap.SugaredLogger, service auth.Service) *Handler {
 	return &Handler{log: log, service: service}
 }
 
+// @Summary Sign up
+// @Tags auth
+// @Description Sign up
+// @ID sign-up
+// @Accept json
+// @Produce json
+// @Param user body domain.SignUpRequest true "user"
+// @Success 200 {object} string
+// @Failure 400 {object} string
+// @Failure 400 {object} string
+// @Failure 500 {object} string
+// @Router /auth/signup [post]
 func (h *Handler) SignUp(c echo.Context) error {
 	var input domain.SignUpRequest
 
@@ -62,6 +75,17 @@ func (h *Handler) SignUp(c echo.Context) error {
 	})
 }
 
+// @Summary Sign in
+// @Tags auth
+// @Description Sign in
+// @ID sign-in
+// @Accept json
+// @Produce json
+// @Param user body domain.SignInRequest true "user"
+// @Success 200 {object} string
+// @Failure 400 {object} string
+// @Failure 500 {object} string
+// @Router /auth/signin [post]
 func (h *Handler) SignIn(c echo.Context) error {
 	var input domain.SignInRequest
 
@@ -94,7 +118,10 @@ func (h *Handler) SignIn(c echo.Context) error {
 		})
 	}
 
+	cookie := authLib.GenerateNewTokenCookie(token)
+	c.SetCookie(cookie)
+
 	return c.JSON(http.StatusOK, echo.Map{
-		"token": token,
+		"message": "success",
 	})
 }

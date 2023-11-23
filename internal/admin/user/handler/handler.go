@@ -65,7 +65,7 @@ func (h *Handler) GetUsers(c echo.Context) error {
 func (h *Handler) UpdateUser(c echo.Context) error {
 	var input domain.User
 
-	userId, err := strconv.Atoi(c.Param("userId"))
+	userID, err := strconv.Atoi(c.Param("userID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -87,7 +87,7 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	err = h.service.UpdateUser(c.Request().Context(), userId, input)
+	err = h.service.UpdateUser(c.Request().Context(), userID, input)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -99,7 +99,7 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 }
 
 func (h *Handler) DeleteUser(c echo.Context) error {
-	userId, err := strconv.Atoi(c.Param("userId"))
+	userID, err := strconv.Atoi(c.Param("userID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -107,7 +107,7 @@ func (h *Handler) DeleteUser(c echo.Context) error {
 		})
 	}
 
-	err = h.service.DeleteUser(c.Request().Context(), userId)
+	err = h.service.DeleteUser(c.Request().Context(), userID)
 
 	if err != nil {
 		h.log.Infof("error while delete user: %v", err)

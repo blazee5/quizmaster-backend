@@ -16,7 +16,7 @@ func NewUserRedisRepo(redisClient *redis.Client) *UserRedisRepo {
 	return &UserRedisRepo{redisClient: redisClient}
 }
 
-func (repo *UserRedisRepo) GetByIdCtx(ctx context.Context, key string) (*models.UserInfo, error) {
+func (repo *UserRedisRepo) GetByIDCtx(ctx context.Context, key string) (*models.UserInfo, error) {
 	userBytes, err := repo.redisClient.Get(ctx, "user:"+key).Bytes()
 
 	if err != nil {

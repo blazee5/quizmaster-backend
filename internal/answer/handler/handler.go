@@ -23,8 +23,8 @@ func NewHandler(log *zap.SugaredLogger, service answer.Service) *Handler {
 }
 
 func (h *Handler) CreateAnswer(c echo.Context) error {
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -32,7 +32,7 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	questionID, err := strconv.Atoi(c.Param("questionID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -40,7 +40,7 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.Create(c.Request().Context(), userId, quizId, questionId)
+	id, err := h.service.Create(c.Request().Context(), userID, quizID, questionID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -63,8 +63,8 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 func (h *Handler) UpdateAnswer(c echo.Context) error {
 	var input domain.Answer
 
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -72,7 +72,7 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 		})
 	}
 
-	answerId, err := strconv.Atoi(c.Param("answerId"))
+	answerID, err := strconv.Atoi(c.Param("answerID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -94,7 +94,7 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Update(c.Request().Context(), answerId, userId, quizId, input)
+	err = h.service.Update(c.Request().Context(), answerID, userID, quizID, input)
 
 	if err != nil {
 		h.log.Infof("error while update answer: %s", err)
@@ -107,8 +107,8 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 }
 
 func (h *Handler) DeleteAnswer(c echo.Context) error {
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -116,7 +116,7 @@ func (h *Handler) DeleteAnswer(c echo.Context) error {
 		})
 	}
 
-	answerId, err := strconv.Atoi(c.Param("answerId"))
+	answerID, err := strconv.Atoi(c.Param("answerID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -124,7 +124,7 @@ func (h *Handler) DeleteAnswer(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Delete(c.Request().Context(), answerId, userId, quizId)
+	err = h.service.Delete(c.Request().Context(), answerID, userID, quizID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{

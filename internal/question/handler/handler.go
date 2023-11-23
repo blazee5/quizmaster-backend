@@ -24,9 +24,20 @@ func NewHandler(log *zap.SugaredLogger, service question.Service) *Handler {
 	return &Handler{log: log, service: service}
 }
 
+// @Summary Create question
+// @Tags question
+// @Description create question
+// @ID create-question
+// @Accept json
+// @Produce json
+// @Param user body domain.Question true "question"
+// @Success 200 {object} string
+// @Failure 400 {object} string
+// @Failure 500 {object} string
+// @Router /api/question [post]
 func (h *Handler) CreateQuestion(c echo.Context) error {
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -34,7 +45,7 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.Create(c.Request().Context(), userId, quizId)
+	id, err := h.service.Create(c.Request().Context(), userID, quizID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -69,7 +80,7 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 		})
 	}
 
-	questions, err := h.service.GetQuestionsById(c.Request().Context(), id)
+	questions, err := h.service.GetQuestionsByID(c.Request().Context(), id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -88,7 +99,7 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 }
 
 func (h *Handler) GetAllQuizQuestions(c echo.Context) error {
-	userId := c.Get("userId").(int)
+	userID := c.Get("userID").(int)
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -97,7 +108,7 @@ func (h *Handler) GetAllQuizQuestions(c echo.Context) error {
 		})
 	}
 
-	questions, err := h.service.GetAllQuestionsById(c.Request().Context(), id, userId)
+	questions, err := h.service.GetAllQuestionsByID(c.Request().Context(), id, userID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -124,8 +135,8 @@ func (h *Handler) GetAllQuizQuestions(c echo.Context) error {
 func (h *Handler) UpdateQuestion(c echo.Context) error {
 	var input domain.Question
 
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -133,7 +144,7 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	questionID, err := strconv.Atoi(c.Param("questionID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -141,7 +152,7 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 		})
 	}
 
-	input.QuizId = quizId
+	input.QuizID = quizID
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -157,7 +168,7 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Update(c.Request().Context(), questionId, userId, quizId, input)
+	err = h.service.Update(c.Request().Context(), questionID, userID, quizID, input)
 
 	if err != nil {
 		h.log.Infof("error while update question: %s", err)
@@ -170,8 +181,8 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 }
 
 func (h *Handler) DeleteQuestion(c echo.Context) error {
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -179,7 +190,7 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	questionID, err := strconv.Atoi(c.Param("questionID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -187,7 +198,7 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Delete(c.Request().Context(), questionId, userId, quizId)
+	err = h.service.Delete(c.Request().Context(), questionID, userID, quizID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -212,8 +223,8 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 }
 
 func (h *Handler) UploadImage(c echo.Context) error {
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -221,7 +232,7 @@ func (h *Handler) UploadImage(c echo.Context) error {
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	questionID, err := strconv.Atoi(c.Param("questionID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -244,7 +255,7 @@ func (h *Handler) UploadImage(c echo.Context) error {
 		})
 	}
 
-	err = h.service.UploadImage(c.Request().Context(), questionId, userId, quizId, file.Filename)
+	err = h.service.UploadImage(c.Request().Context(), questionID, userID, quizID, file.Filename)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -268,8 +279,8 @@ func (h *Handler) UploadImage(c echo.Context) error {
 }
 
 func (h *Handler) DeleteImage(c echo.Context) error {
-	userId := c.Get("userId").(int)
-	quizId, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -277,7 +288,7 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 		})
 	}
 
-	questionId, err := strconv.Atoi(c.Param("questionId"))
+	questionID, err := strconv.Atoi(c.Param("questionID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -295,7 +306,7 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 		}
 	}
 
-	err = h.service.DeleteImage(c.Request().Context(), questionId, userId, quizId)
+	err = h.service.DeleteImage(c.Request().Context(), questionID, userID, quizID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{

@@ -24,9 +24,9 @@ func NewHandler(log *zap.SugaredLogger, service user.Service) *Handler {
 }
 
 func (h *Handler) Get(c echo.Context) error {
-	userId := c.Get("userId").(int)
+	userID := c.Get("userID").(int)
 
-	user, err := h.service.GetById(c.Request().Context(), userId)
+	user, err := h.service.GetByID(c.Request().Context(), userID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -44,8 +44,8 @@ func (h *Handler) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
-func (h *Handler) GetById(c echo.Context) error {
-	userId, err := strconv.Atoi(c.Param("id"))
+func (h *Handler) GetByID(c echo.Context) error {
+	userID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -53,7 +53,7 @@ func (h *Handler) GetById(c echo.Context) error {
 		})
 	}
 
-	user, err := h.service.GetById(c.Request().Context(), userId)
+	user, err := h.service.GetByID(c.Request().Context(), userID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -74,7 +74,7 @@ func (h *Handler) GetById(c echo.Context) error {
 func (h *Handler) Update(c echo.Context) error {
 	var input domain.UpdateUser
 
-	userId := c.Get("userId").(int)
+	userID := c.Get("userID").(int)
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -90,7 +90,7 @@ func (h *Handler) Update(c echo.Context) error {
 		})
 	}
 
-	err := h.service.Update(c.Request().Context(), userId, input)
+	err := h.service.Update(c.Request().Context(), userID, input)
 
 	if err != nil {
 		h.log.Infof("error while update user: %s", err)
@@ -103,9 +103,9 @@ func (h *Handler) Update(c echo.Context) error {
 }
 
 func (h *Handler) Delete(c echo.Context) error {
-	userId := c.Get("userId").(int)
+	userID := c.Get("userID").(int)
 
-	err := h.service.Delete(c.Request().Context(), userId)
+	err := h.service.Delete(c.Request().Context(), userID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -124,7 +124,7 @@ func (h *Handler) Delete(c echo.Context) error {
 }
 
 func (h *Handler) UploadAvatar(c echo.Context) error {
-	userId := c.Get("userId").(int)
+	userID := c.Get("userID").(int)
 
 	file, err := c.FormFile("file")
 
@@ -138,7 +138,7 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "error while upload avatar")
 	}
 
-	err = h.service.ChangeAvatar(c.Request().Context(), userId, file.Filename)
+	err = h.service.ChangeAvatar(c.Request().Context(), userID, file.Filename)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{

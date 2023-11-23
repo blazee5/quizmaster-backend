@@ -22,7 +22,7 @@ func NewHandler(log *zap.SugaredLogger, service adminquiz.Service) *Handler {
 
 func (h *Handler) CreateQuiz(c echo.Context) error {
 	var input domain.Quiz
-	userId := c.Get("userId").(int)
+	userID := c.Get("userID").(int)
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -38,7 +38,7 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.CreateQuiz(c.Request().Context(), userId, input)
+	id, err := h.service.CreateQuiz(c.Request().Context(), userID, input)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -67,7 +67,7 @@ func (h *Handler) GetQuizzes(c echo.Context) error {
 func (h *Handler) UpdateQuiz(c echo.Context) error {
 	var input domain.Quiz
 
-	quizId, err := strconv.Atoi(c.Param("quizId"))
+	quizID, err := strconv.Atoi(c.Param("quizID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -89,7 +89,7 @@ func (h *Handler) UpdateQuiz(c echo.Context) error {
 		})
 	}
 
-	err = h.service.UpdateQuiz(c.Request().Context(), quizId, input)
+	err = h.service.UpdateQuiz(c.Request().Context(), quizID, input)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -101,7 +101,7 @@ func (h *Handler) UpdateQuiz(c echo.Context) error {
 }
 
 func (h *Handler) DeleteQuiz(c echo.Context) error {
-	quizId, err := strconv.Atoi(c.Param("quizId"))
+	quizID, err := strconv.Atoi(c.Param("quizID"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
@@ -109,7 +109,7 @@ func (h *Handler) DeleteQuiz(c echo.Context) error {
 		})
 	}
 
-	err = h.service.DeleteQuiz(c.Request().Context(), quizId)
+	err = h.service.DeleteQuiz(c.Request().Context(), quizID)
 
 	if err != nil {
 		h.log.Infof("error while delete quiz: %v", err)

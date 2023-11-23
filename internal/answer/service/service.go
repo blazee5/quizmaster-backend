@@ -19,44 +19,44 @@ func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRep
 	return &Service{log: log, repo: repo, quizRepo: quizRepo}
 }
 
-func (s *Service) Create(ctx context.Context, userId, quizId, questionId int) (int, error) {
-	quiz, err := s.quizRepo.GetById(ctx, quizId)
+func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (int, error) {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return 0, err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return 0, http_errors.PermissionDenied
 	}
 
-	return s.repo.Create(ctx, questionId)
+	return s.repo.Create(ctx, questionID)
 }
 
-func (s *Service) Update(ctx context.Context, answerId, userId, quizId int, input domain.Answer) error {
-	quiz, err := s.quizRepo.GetById(ctx, quizId)
+func (s *Service) Update(ctx context.Context, answerID, userID, quizID int, input domain.Answer) error {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
 	}
 
-	return s.repo.Update(ctx, answerId, input)
+	return s.repo.Update(ctx, answerID, input)
 }
 
-func (s *Service) Delete(ctx context.Context, answerId, userId, quizId int) error {
-	quiz, err := s.quizRepo.GetById(ctx, quizId)
+func (s *Service) Delete(ctx context.Context, answerID, userID, quizID int) error {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
 	}
 
-	return s.repo.Delete(ctx, answerId)
+	return s.repo.Delete(ctx, answerID)
 }

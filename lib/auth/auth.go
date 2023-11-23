@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"net/http"
 	"time"
 )
 
@@ -15,18 +16,18 @@ const (
 
 type TokenClaims struct {
 	jwt.RegisteredClaims
-	UserId int `json:"user_id"`
-	RoleId int `json:"role_id"`
+	UserID int `json:"user_id"`
+	RoleID int `json:"role_id"`
 }
 
-func GenerateToken(userId, roleId int) (string, error) {
+func GenerateToken(userID, roleID int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &TokenClaims{
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
-		userId,
-		roleId,
+		userID,
+		roleID,
 	})
 
 	return token.SignedString([]byte(signingKey))
@@ -46,7 +47,7 @@ func ParseToken(token string) (int, int, error) {
 		return 0, 0, err
 	}
 
-	return claims.UserId, claims.RoleId, nil
+	return claims.UserID, claims.RoleID, nil
 }
 
 func GenerateHashPassword(password string) string {
@@ -54,4 +55,14 @@ func GenerateHashPassword(password string) string {
 	hash.Write([]byte(password))
 
 	return fmt.Sprintf("%x", hash.Sum([]byte(salt)))
+}
+
+func GenerateNewTokenCookie(token string) *http.Cookie {
+	return &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Expires:  time.Now().Add(72 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+	}
 }

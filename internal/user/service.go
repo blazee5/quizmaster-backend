@@ -7,10 +7,10 @@ import (
 )
 
 type Service interface {
-	GetById(ctx context.Context, userId int) (models.UserInfo, error)
-	GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error)
-	GetResults(ctx context.Context, userId int) ([]models.Quiz, error)
-	ChangeAvatar(ctx context.Context, userId int, file string) error
-	Update(ctx context.Context, userId int, input domain.UpdateUser) error
-	Delete(ctx context.Context, userId int) error
+	GetByID(ctx context.Context, userID int) (models.UserInfo, error)
+	GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error)
+	GetResults(ctx context.Context, userID int) ([]models.Quiz, error)
+	ChangeAvatar(ctx context.Context, userID int, file string) error
+	Update(ctx context.Context, userID int, input domain.UpdateUser) error
+	Delete(ctx context.Context, userID int) error
 }

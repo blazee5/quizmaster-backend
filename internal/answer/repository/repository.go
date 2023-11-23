@@ -14,11 +14,11 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) Create(ctx context.Context, questionId int) (int, error) {
+func (repo *Repository) Create(ctx context.Context, questionID int) (int, error) {
 	var id int
 
 	err := repo.db.QueryRowxContext(ctx, "INSERT INTO answers (question_id) VALUES ($1) RETURNING id",
-		questionId).Scan(&id)
+		questionID).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -27,12 +27,12 @@ func (repo *Repository) Create(ctx context.Context, questionId int) (int, error)
 	return id, nil
 }
 
-func (repo *Repository) Update(ctx context.Context, answerId int, input domain.Answer) error {
+func (repo *Repository) Update(ctx context.Context, answerID int, input domain.Answer) error {
 	err := repo.db.QueryRowxContext(ctx, `UPDATE answers SET
 		text = $1,
 		is_correct = $2
 		WHERE id = $3`,
-		input.Text, input.IsCorrect, answerId).Err()
+		input.Text, input.IsCorrect, answerID).Err()
 
 	if err != nil {
 		return err
@@ -41,8 +41,8 @@ func (repo *Repository) Update(ctx context.Context, answerId int, input domain.A
 	return nil
 }
 
-func (repo *Repository) Delete(ctx context.Context, answerId int) error {
-	err := repo.db.QueryRowxContext(ctx, `DELETE FROM answers WHERE id = $1`, answerId).Err()
+func (repo *Repository) Delete(ctx context.Context, answerID int) error {
+	err := repo.db.QueryRowxContext(ctx, `DELETE FROM answers WHERE id = $1`, answerID).Err()
 
 	if err != nil {
 		return err

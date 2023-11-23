@@ -38,20 +38,20 @@ func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
 	return quizzes, nil
 }
 
-func (repo *Repository) Create(ctx context.Context, userId int, input domain.Quiz) (int, error) {
-	var quizId int
+func (repo *Repository) Create(ctx context.Context, userID int, input domain.Quiz) (int, error) {
+	var quizID int
 
 	err := repo.db.QueryRowxContext(ctx, "INSERT INTO quizzes (title, description, user_id) VALUES ($1, $2, $3) RETURNING id",
-		input.Title, input.Description, userId).Scan(&quizId)
+		input.Title, input.Description, userID).Scan(&quizID)
 
 	if err != nil {
 		return 0, err
 	}
 
-	return quizId, nil
+	return quizID, nil
 }
 
-func (repo *Repository) GetById(ctx context.Context, id int) (models.Quiz, error) {
+func (repo *Repository) GetByID(ctx context.Context, id int) (models.Quiz, error) {
 	var quiz models.Quiz
 
 	err := repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", id).StructScan(&quiz)
@@ -63,7 +63,7 @@ func (repo *Repository) GetById(ctx context.Context, id int) (models.Quiz, error
 	return quiz, nil
 }
 
-func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error) {
+func (repo *Repository) GetQuestionsByID(ctx context.Context, id int, includeIsCorrect bool) ([]models.Question, error) {
 	questions := make([]models.Question, 0)
 
 	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
@@ -97,7 +97,7 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 
 	for i := range questions {
 		for _, answer := range answers {
-			if answer.QuestionId == questions[i].Id {
+			if answer.QuestionID == questions[i].ID {
 				questions[i].Answers = append(questions[i].Answers, answer)
 			}
 		}
@@ -106,11 +106,11 @@ func (repo *Repository) GetQuestionsById(ctx context.Context, id int, includeIsC
 	return questions, nil
 }
 
-func (repo *Repository) Update(ctx context.Context, quizId int, input domain.Quiz) error {
+func (repo *Repository) Update(ctx context.Context, quizID int, input domain.Quiz) error {
 	err := repo.db.QueryRowxContext(ctx, `UPDATE quizzes SET
 		title = COALESCE(NULLIF($1, ''), title),
 		description = COALESCE(NULLIF($2, ''), description) WHERE id = $3`,
-		input.Title, input.Description, quizId).Err()
+		input.Title, input.Description, quizID).Err()
 
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func (repo *Repository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (repo *Repository) GetAnswerById(ctx context.Context, id int) (models.Answer, error) {
+func (repo *Repository) GetAnswerByID(ctx context.Context, id int) (models.Answer, error) {
 	var answer models.Answer
 
 	err := repo.db.QueryRowxContext(ctx, selectAnswerQuery, id).StructScan(&answer)
@@ -149,7 +149,7 @@ func (repo *Repository) GetAnswerById(ctx context.Context, id int) (models.Answe
 	return answer, nil
 }
 
-func (repo *Repository) GetAnswersById(ctx context.Context, id int) ([]models.Answer, error) {
+func (repo *Repository) GetAnswersByID(ctx context.Context, id int) ([]models.Answer, error) {
 	var answer []models.Answer
 
 	err := repo.db.SelectContext(ctx, &answer, selectAnswersQuery, id)
@@ -172,8 +172,8 @@ func (repo *Repository) GetQuestionType(ctx context.Context, id int) (string, er
 	return questionType, nil
 }
 
-func (repo *Repository) SaveUserAnswer(ctx context.Context, tx *sqlx.Tx, userId, questionId, answerId int, answerText string) error {
-	_, err := tx.ExecContext(ctx, insertUserAnswerQuery, userId, questionId, answerId, answerText)
+func (repo *Repository) SaveUserAnswer(ctx context.Context, tx *sqlx.Tx, userID, questionID, answerID int, answerText string) error {
+	_, err := tx.ExecContext(ctx, insertUserAnswerQuery, userID, questionID, answerID, answerText)
 
 	if err != nil {
 		tx.Rollback()
@@ -195,8 +195,8 @@ func (repo *Repository) GetCorrectAnswers(ctx context.Context, id int) (int, err
 	return totalCorrectAnswers, nil
 }
 
-func (repo *Repository) SaveResult(ctx context.Context, userId, quizId int, score, percent int) error {
-	_, err := repo.db.ExecContext(ctx, insertResultQuery, userId, quizId, score, percent)
+func (repo *Repository) SaveResult(ctx context.Context, userID, quizID int, score, percent int) error {
+	_, err := repo.db.ExecContext(ctx, insertResultQuery, userID, quizID, score, percent)
 
 	if err != nil {
 		return err

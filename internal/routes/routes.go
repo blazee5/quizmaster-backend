@@ -64,7 +64,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		user := api.Group("/user", AuthMiddleware)
 		{
 			user.GET("/me", userHandlers.Get)
-			user.GET("/:id", userHandlers.GetById)
+			user.GET("/:id", userHandlers.GetByID)
 			user.POST("/avatar", userHandlers.UploadAvatar)
 			user.PUT("", userHandlers.Update)
 			user.DELETE("", userHandlers.Delete)
@@ -95,22 +95,22 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			question := quiz.Group("/:id/questions", AuthMiddleware)
 			{
 				question.POST("", questionHandlers.CreateQuestion)
-				question.POST("/:questionId/image", questionHandlers.UploadImage)
+				question.POST("/:questionID/image", questionHandlers.UploadImage)
 				question.GET("", questionHandlers.GetQuizQuestions)
 				question.GET("/all", questionHandlers.GetAllQuizQuestions)
-				question.PUT("/:questionId", questionHandlers.UpdateQuestion)
-				question.DELETE("/:questionId", questionHandlers.DeleteQuestion)
-				question.DELETE("/:questionId/image", questionHandlers.DeleteImage)
+				question.PUT("/:questionID", questionHandlers.UpdateQuestion)
+				question.DELETE("/:questionID", questionHandlers.DeleteQuestion)
+				question.DELETE("/:questionID/image", questionHandlers.DeleteImage)
 
 				answerRepos := answerRepo.NewRepository(s.db)
 				answerServices := answerService.NewService(s.log, answerRepos, quizRepos)
 				answerHandlers := answerHandler.NewHandler(s.log, answerServices)
 
-				answer := question.Group("/:questionId/answers")
+				answer := question.Group("/:questionID/answers")
 				{
 					answer.POST("", answerHandlers.CreateAnswer)
-					answer.PUT("/:answerId", answerHandlers.UpdateAnswer)
-					answer.DELETE("/:answerId", answerHandlers.DeleteAnswer)
+					answer.PUT("/:answerID", answerHandlers.UpdateAnswer)
+					answer.DELETE("/:answerID", answerHandlers.DeleteAnswer)
 				}
 			}
 		}
@@ -135,8 +135,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		{
 			users.GET("", adminUserHandlers.GetUsers)
 			users.POST("", adminUserHandlers.CreateUser)
-			users.PUT("/:userId", adminUserHandlers.UpdateUser)
-			users.DELETE("/:userId", adminUserHandlers.DeleteUser)
+			users.PUT("/:userID", adminUserHandlers.UpdateUser)
+			users.DELETE("/:userID", adminUserHandlers.DeleteUser)
 		}
 
 		adminQuizRepos := adminQuizRepo.NewRepository(s.db)
@@ -147,8 +147,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		{
 			quizzes.GET("", adminQuizHandlers.GetQuizzes)
 			quizzes.POST("", adminQuizHandlers.CreateQuiz)
-			quizzes.PUT("/:quizId", adminQuizHandlers.UpdateQuiz)
-			quizzes.DELETE("/:quizId", adminQuizHandlers.DeleteQuiz)
+			quizzes.PUT("/:quizID", adminQuizHandlers.UpdateQuiz)
+			quizzes.DELETE("/:quizID", adminQuizHandlers.DeleteQuiz)
 		}
 
 		admin.GET("", adminUserHandlers.GetUsers)

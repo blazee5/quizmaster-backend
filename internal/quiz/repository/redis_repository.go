@@ -17,7 +17,7 @@ func NewAuthRedisRepo(redisClient *redis.Client) quiz.RedisRepository {
 	return &quizRedisRepo{redisClient: redisClient}
 }
 
-func (repo *quizRedisRepo) GetByIdCtx(ctx context.Context, key string) (*models.Quiz, error) {
+func (repo *quizRedisRepo) GetByIDCtx(ctx context.Context, key string) (*models.Quiz, error) {
 	quizBytes, err := repo.redisClient.Get(ctx, "quiz:"+key).Bytes()
 
 	if err != nil {

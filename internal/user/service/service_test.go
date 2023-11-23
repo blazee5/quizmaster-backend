@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestService_GetById(t *testing.T) {
+func TestService_GetByID(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -18,7 +18,7 @@ func TestService_GetById(t *testing.T) {
 
 	user := models.UserInfo{
 		User: models.ShortUser{
-			Id:       1,
+			ID:       1,
 			Username: "username",
 			Email:    "email@gmail.com",
 			Avatar:   "",
@@ -34,9 +34,9 @@ func TestService_GetById(t *testing.T) {
 	mockUserRedisRepo := mock_user.NewMockRedisRepository(ctrl)
 	userService := NewService(log, mockUserRepo, mockUserRedisRepo)
 
-	mockUserRedisRepo.EXPECT().GetByIdCtx(ctx, "1").Return(&user, nil)
+	mockUserRedisRepo.EXPECT().GetByIDCtx(ctx, "1").Return(&user, nil)
 
-	selectedUser, err := userService.GetById(ctx, 1)
+	selectedUser, err := userService.GetByID(ctx, 1)
 
 	require.NoError(t, err)
 	require.NotNil(t, selectedUser)

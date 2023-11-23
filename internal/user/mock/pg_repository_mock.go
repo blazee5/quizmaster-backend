@@ -41,88 +41,88 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // ChangeAvatar mocks base method.
-func (m *MockRepository) ChangeAvatar(ctx context.Context, userId int, file string) error {
+func (m *MockRepository) ChangeAvatar(ctx context.Context, userID int, file string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeAvatar", ctx, userId, file)
+	ret := m.ctrl.Call(m, "ChangeAvatar", ctx, userID, file)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ChangeAvatar indicates an expected call of ChangeAvatar.
-func (mr *MockRepositoryMockRecorder) ChangeAvatar(ctx, userId, file any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) ChangeAvatar(ctx, userID, file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAvatar", reflect.TypeOf((*MockRepository)(nil).ChangeAvatar), ctx, userId, file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAvatar", reflect.TypeOf((*MockRepository)(nil).ChangeAvatar), ctx, userID, file)
 }
 
 // Delete mocks base method.
-func (m *MockRepository) Delete(ctx context.Context, userId int) error {
+func (m *MockRepository) Delete(ctx context.Context, userID int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAnswer", ctx, userId)
+	ret := m.ctrl.Call(m, "DeleteAnswer", ctx, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockRepositoryMockRecorder) Delete(ctx, userId any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Delete(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAnswer", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAnswer", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, userID)
 }
 
-// GetById mocks base method.
-func (m *MockRepository) GetById(ctx context.Context, userId int) (models.UserInfo, error) {
+// GetByID mocks base method.
+func (m *MockRepository) GetByID(ctx context.Context, userID int) (models.UserInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetById", ctx, userId)
+	ret := m.ctrl.Call(m, "GetByID", ctx, userID)
 	ret0, _ := ret[0].(models.UserInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetById indicates an expected call of GetById.
-func (mr *MockRepositoryMockRecorder) GetById(ctx, userId any) *gomock.Call {
+// GetByID indicates an expected call of GetByID.
+func (mr *MockRepositoryMockRecorder) GetByID(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockRepository)(nil).GetById), ctx, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockRepository)(nil).GetByID), ctx, userID)
 }
 
 // GetQuizzes mocks base method.
-func (m *MockRepository) GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error) {
+func (m *MockRepository) GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetQuizzes", ctx, userId)
+	ret := m.ctrl.Call(m, "GetQuizzes", ctx, userID)
 	ret0, _ := ret[0].([]models.Quiz)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetQuizzes indicates an expected call of GetQuizzes.
-func (mr *MockRepositoryMockRecorder) GetQuizzes(ctx, userId any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetQuizzes(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuizzes", reflect.TypeOf((*MockRepository)(nil).GetQuizzes), ctx, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuizzes", reflect.TypeOf((*MockRepository)(nil).GetQuizzes), ctx, userID)
 }
 
 // GetResults mocks base method.
-func (m *MockRepository) GetResults(ctx context.Context, userId int) ([]models.Quiz, error) {
+func (m *MockRepository) GetResults(ctx context.Context, userID int) ([]models.Quiz, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResults", ctx, userId)
+	ret := m.ctrl.Call(m, "GetResults", ctx, userID)
 	ret0, _ := ret[0].([]models.Quiz)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetResults indicates an expected call of GetResults.
-func (mr *MockRepositoryMockRecorder) GetResults(ctx, userId any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetResults(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResults", reflect.TypeOf((*MockRepository)(nil).GetResults), ctx, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResults", reflect.TypeOf((*MockRepository)(nil).GetResults), ctx, userID)
 }
 
 // Update mocks base method.
-func (m *MockRepository) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
+func (m *MockRepository) Update(ctx context.Context, userID int, input domain.UpdateUser) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAnswer", ctx, userId, input)
+	ret := m.ctrl.Call(m, "UpdateAnswer", ctx, userID, input)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockRepositoryMockRecorder) Update(ctx, userId, input any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Update(ctx, userID, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnswer", reflect.TypeOf((*MockRepository)(nil).Update), ctx, userId, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnswer", reflect.TypeOf((*MockRepository)(nil).Update), ctx, userID, input)
 }

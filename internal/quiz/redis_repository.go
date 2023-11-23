@@ -6,7 +6,7 @@ import (
 )
 
 type RedisRepository interface {
-	GetByIdCtx(ctx context.Context, key string) (*models.Quiz, error)
+	GetByIDCtx(ctx context.Context, key string) (*models.Quiz, error)
 	SetQuizCtx(ctx context.Context, key string, seconds int, quiz *models.Quiz) error
 	DeleteQuizCtx(ctx context.Context, key string) error
 }

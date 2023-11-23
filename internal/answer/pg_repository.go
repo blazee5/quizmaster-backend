@@ -6,7 +6,7 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, questionId int) (int, error)
-	Update(ctx context.Context, answerId int, input domain.Answer) error
-	Delete(ctx context.Context, answerId int) error
+	Create(ctx context.Context, questionID int) (int, error)
+	Update(ctx context.Context, answerID int, input domain.Answer) error
+	Delete(ctx context.Context, answerID int) error
 }

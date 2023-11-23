@@ -29,8 +29,8 @@ func (s *Service) GetAll(ctx context.Context) ([]models.Quiz, error) {
 	return s.repo.GetAll(ctx)
 }
 
-func (s *Service) GetById(ctx context.Context, id int) (models.Quiz, error) {
-	cachedQuiz, err := s.quizRedisRepo.GetByIdCtx(ctx, strconv.Itoa(id))
+func (s *Service) GetByID(ctx context.Context, id int) (models.Quiz, error) {
+	cachedQuiz, err := s.quizRedisRepo.GetByIDCtx(ctx, strconv.Itoa(id))
 
 	if err != nil {
 		s.log.Infof("cannot get quiz by id in redis: %v", err)
@@ -40,27 +40,27 @@ func (s *Service) GetById(ctx context.Context, id int) (models.Quiz, error) {
 		return *cachedQuiz, nil
 	}
 
-	quiz, err := s.repo.GetById(ctx, id)
+	quiz, err := s.repo.GetByID(ctx, id)
 
 	if err != nil {
 		return models.Quiz{}, err
 	}
 
-	if err := s.quizRedisRepo.SetQuizCtx(ctx, strconv.Itoa(quiz.Id), 600, &quiz); err != nil {
+	if err := s.quizRedisRepo.SetQuizCtx(ctx, strconv.Itoa(quiz.ID), 600, &quiz); err != nil {
 		s.log.Infof("error while save quiz to cache: %v", err)
 	}
 
 	return quiz, nil
 }
 
-func (s *Service) Create(ctx context.Context, userId int, input domain.Quiz) (int, error) {
-	id, err := s.repo.Create(ctx, userId, input)
+func (s *Service) Create(ctx context.Context, userID int, input domain.Quiz) (int, error) {
+	id, err := s.repo.Create(ctx, userID, input)
 
 	if err != nil {
 		return 0, err
 	}
 
-	if err := s.userRedisRepo.DeleteUserCtx(ctx, strconv.Itoa(userId)); err != nil {
+	if err := s.userRedisRepo.DeleteUserCtx(ctx, strconv.Itoa(userID)); err != nil {
 		return 0, err
 	}
 
@@ -71,8 +71,8 @@ func (s *Service) Create(ctx context.Context, userId int, input domain.Quiz) (in
 	return id, nil
 }
 
-func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input domain.Result) (int, error) {
-	totalQuestions, err := s.repo.GetQuestionsById(ctx, quizId, false)
+func (s *Service) SaveResult(ctx context.Context, userID, quizID int, input domain.Result) (int, error) {
+	totalQuestions, err := s.repo.GetQuestionsByID(ctx, quizID, false)
 
 	if err != nil {
 		return 0, err
@@ -84,7 +84,7 @@ func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input doma
 		return 0, err
 	}
 
-	score, err := s.SaveResultProcess(ctx, tx, userId, input)
+	score, err := s.SaveResultProcess(ctx, tx, userID, input)
 
 	if err != nil {
 		return 0, err
@@ -92,60 +92,60 @@ func (s *Service) SaveResult(ctx context.Context, userId, quizId int, input doma
 
 	percent := score / float64(len(totalQuestions)) * 100
 
-	err = s.repo.SaveResult(ctx, userId, quizId, int(score), int(percent))
+	err = s.repo.SaveResult(ctx, userID, quizID, int(score), int(percent))
 
 	if err != nil {
 		return 0, err
 	}
 
-	if err := s.userRedisRepo.DeleteUserCtx(ctx, strconv.Itoa(userId)); err != nil {
+	if err := s.userRedisRepo.DeleteUserCtx(ctx, strconv.Itoa(userID)); err != nil {
 		return 0, err
 	}
 
 	return int(score), nil
 }
 
-func (s *Service) Update(ctx context.Context, userId, quizId int, input domain.Quiz) error {
-	quiz, err := s.repo.GetById(ctx, quizId)
+func (s *Service) Update(ctx context.Context, userID, quizID int, input domain.Quiz) error {
+	quiz, err := s.repo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
 	}
 
-	return s.repo.Update(ctx, quizId, input)
+	return s.repo.Update(ctx, quizID, input)
 }
 
-func (s *Service) Delete(ctx context.Context, userId, quizId int) error {
-	quiz, err := s.repo.GetById(ctx, quizId)
+func (s *Service) Delete(ctx context.Context, userID, quizID int) error {
+	quiz, err := s.repo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
 	}
 
-	return s.repo.Delete(ctx, quizId)
+	return s.repo.Delete(ctx, quizID)
 }
 
-func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int, input domain.Result) (float64, error) {
+func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userID int, input domain.Result) (float64, error) {
 	var score float64
 
-	for questionId, answer := range input.Answers {
+	for questionID, answer := range input.Answers {
 		var userCorrectAnswers int
 		var totalUserAnswers int
-		totalCorrectAnswers, err := s.repo.GetCorrectAnswers(ctx, questionId)
+		totalCorrectAnswers, err := s.repo.GetCorrectAnswers(ctx, questionID)
 
 		if err != nil {
 			return 0, err
 		}
 
-		questionType, err := s.repo.GetQuestionType(ctx, questionId)
+		questionType, err := s.repo.GetQuestionType(ctx, questionID)
 
 		if err != nil {
 			return 0, err
@@ -153,14 +153,14 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 
 		if questionType == "choice" {
 			if value, ok := answer.([]interface{}); ok {
-				for _, answerId := range value {
-					ans, err := s.repo.GetAnswerById(ctx, int(answerId.(float64)))
+				for _, answerID := range value {
+					ans, err := s.repo.GetAnswerByID(ctx, int(answerID.(float64)))
 
 					if err != nil {
 						return 0, err
 					}
 
-					err = s.repo.SaveUserAnswer(ctx, tx, userId, questionId, int(answerId.(float64)), "")
+					err = s.repo.SaveUserAnswer(ctx, tx, userID, questionID, int(answerID.(float64)), "")
 
 					if err != nil {
 						return 0, err
@@ -175,11 +175,11 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 			}
 		} else {
 			if value, ok := answer.(string); ok {
-				answers, err := s.repo.GetAnswersById(ctx, questionId)
+				answers, err := s.repo.GetAnswersByID(ctx, questionID)
 				if err != nil {
 					return 0, err
 				}
-				err = s.repo.SaveUserAnswer(ctx, tx, userId, questionId, 0, value)
+				err = s.repo.SaveUserAnswer(ctx, tx, userID, questionID, 0, value)
 				if err != nil {
 					return 0, err
 				}
@@ -204,30 +204,30 @@ func (s *Service) SaveResultProcess(ctx context.Context, tx *sqlx.Tx, userId int
 	return score, nil
 }
 
-func (s *Service) UploadImage(ctx context.Context, userId, quizId int, filename string) error {
-	quiz, err := s.repo.GetById(ctx, quizId)
+func (s *Service) UploadImage(ctx context.Context, userID, quizID int, filename string) error {
+	quiz, err := s.repo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
 	}
 
-	return s.repo.UploadImage(ctx, quizId, filename)
+	return s.repo.UploadImage(ctx, quizID, filename)
 }
 
-func (s *Service) DeleteImage(ctx context.Context, userId, quizId int) error {
-	quiz, err := s.repo.GetById(ctx, quizId)
+func (s *Service) DeleteImage(ctx context.Context, userID, quizID int) error {
+	quiz, err := s.repo.GetByID(ctx, quizID)
 
 	if err != nil {
 		return err
 	}
 
-	if quiz.UserId != userId {
+	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
 	}
 
-	return s.repo.DeleteImage(ctx, quizId)
+	return s.repo.DeleteImage(ctx, quizID)
 }

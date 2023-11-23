@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, userId int, input domain.Quiz) (int, error)
+	Create(ctx context.Context, userID int, input domain.Quiz) (int, error)
 	GetQuizzes(ctx context.Context) ([]models.Quiz, error)
 	Update(ctx context.Context, id int, input domain.Quiz) error
 	Delete(ctx context.Context, id int) error

@@ -17,10 +17,10 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInfo, error) {
+func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInfo, error) {
 	var user models.ShortUser
 
-	err := repo.db.QueryRowxContext(ctx, "SELECT id, username, email, avatar FROM users WHERE id = $1", userId).StructScan(&user)
+	err := repo.db.QueryRowxContext(ctx, "SELECT id, username, email, avatar FROM users WHERE id = $1", userID).StructScan(&user)
 
 	if err != nil {
 		return models.UserInfo{}, err
@@ -28,7 +28,7 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInf
 
 	quizzes := make([]models.Quiz, 0)
 
-	err = repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userId)
+	err = repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userID)
 
 	if err != nil {
 		return models.UserInfo{}, err
@@ -47,7 +47,7 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInf
 		return models.UserInfo{}, err
 	}
 
-	rows, err := repo.db.QueryxContext(ctx, query, userId)
+	rows, err := repo.db.QueryxContext(ctx, query, userID)
 	if err != nil {
 		return models.UserInfo{}, err
 	}
@@ -58,11 +58,11 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInf
 		var quiz models.Quiz
 
 		err := rows.Scan(
-			&quiz.Id,
+			&quiz.ID,
 			&quiz.Title,
 			&quiz.Description,
 			&quiz.Image,
-			&quiz.UserId,
+			&quiz.UserID,
 			&quiz.CreatedAt,
 			&userResult.Score,
 			&userResult.Percent,
@@ -72,10 +72,10 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInf
 			return models.UserInfo{}, err
 		}
 
-		if !slices.Contains(processedQuizzes, quiz.Id) {
+		if !slices.Contains(processedQuizzes, quiz.ID) {
 			userResult.Quiz = quiz
 			userResults = append(userResults, userResult)
-			processedQuizzes = append(processedQuizzes, quiz.Id)
+			processedQuizzes = append(processedQuizzes, quiz.ID)
 		}
 	}
 
@@ -90,10 +90,10 @@ func (repo *Repository) GetById(ctx context.Context, userId int) (models.UserInf
 	}, nil
 }
 
-func (repo *Repository) GetQuizzes(ctx context.Context, userId int) ([]models.Quiz, error) {
+func (repo *Repository) GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error) {
 	quizzes := make([]models.Quiz, 0)
 
-	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userId)
+	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userID)
 
 	if err != nil {
 		return nil, err
@@ -102,10 +102,10 @@ func (repo *Repository) GetQuizzes(ctx context.Context, userId int) ([]models.Qu
 	return quizzes, nil
 }
 
-func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Quiz, error) {
+func (repo *Repository) GetResults(ctx context.Context, userID int) ([]models.Quiz, error) {
 	quizzes := make([]models.Quiz, 0)
 
-	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1", userId)
+	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1", userID)
 	defer rows.Close()
 
 	if err != nil {
@@ -113,16 +113,16 @@ func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Qu
 	}
 
 	for rows.Next() {
-		var quizId int
+		var quizID int
 		var quiz models.Quiz
 
-		err := rows.Scan(&quizId)
+		err := rows.Scan(&quizID)
 
 		if err != nil {
 			return nil, err
 		}
 
-		err = repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", quizId).StructScan(&quiz)
+		err = repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", quizID).StructScan(&quiz)
 
 		if err != nil {
 			return nil, err
@@ -137,8 +137,8 @@ func (repo *Repository) GetResults(ctx context.Context, userId int) ([]models.Qu
 
 }
 
-func (repo *Repository) ChangeAvatar(ctx context.Context, userId int, file string) error {
-	_, err := repo.db.ExecContext(ctx, "UPDATE users SET avatar = $1 WHERE id = $2", file, userId)
+func (repo *Repository) ChangeAvatar(ctx context.Context, userID int, file string) error {
+	_, err := repo.db.ExecContext(ctx, "UPDATE users SET avatar = $1 WHERE id = $2", file, userID)
 
 	if err != nil {
 		return err
@@ -147,8 +147,8 @@ func (repo *Repository) ChangeAvatar(ctx context.Context, userId int, file strin
 	return nil
 }
 
-func (repo *Repository) Update(ctx context.Context, userId int, input domain.UpdateUser) error {
-	_, err := repo.db.ExecContext(ctx, "UPDATE users SET username = COALESCE(NULLIF($1, ''), username) WHERE id = $2", input.Username, userId)
+func (repo *Repository) Update(ctx context.Context, userID int, input domain.UpdateUser) error {
+	_, err := repo.db.ExecContext(ctx, "UPDATE users SET username = COALESCE(NULLIF($1, ''), username) WHERE id = $2", input.Username, userID)
 
 	if err != nil {
 		return err
@@ -157,8 +157,8 @@ func (repo *Repository) Update(ctx context.Context, userId int, input domain.Upd
 	return nil
 }
 
-func (repo *Repository) Delete(ctx context.Context, userId int) error {
-	res, err := repo.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userId)
+func (repo *Repository) Delete(ctx context.Context, userID int) error {
+	res, err := repo.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userID)
 
 	if err != nil {
 		return err

@@ -7,8 +7,8 @@ import (
 )
 
 type Repository interface {
-	CreateQuestion(ctx context.Context, quizId int) (int, error)
-	GetQuestionsById(ctx context.Context, id int) ([]models.Question, error)
+	CreateQuestion(ctx context.Context, quizID int) (int, error)
+	GetQuestionsByID(ctx context.Context, id int) ([]models.Question, error)
 	GetQuestionsWithAnswers(ctx context.Context, id int) ([]models.QuestionWithAnswers, error)
 	Update(ctx context.Context, id int, input domain.Question) error
 	Delete(ctx context.Context, id int) error

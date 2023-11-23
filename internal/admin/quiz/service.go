@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	CreateQuiz(ctx context.Context, userId int, input domain.Quiz) (int, error)
+	CreateQuiz(ctx context.Context, userID int, input domain.Quiz) (int, error)
 	GetQuizzes(ctx context.Context) ([]models.Quiz, error)
 	UpdateQuiz(ctx context.Context, id int, input domain.Quiz) error
 	DeleteQuiz(ctx context.Context, id int) error
