@@ -60,3 +60,8 @@ func (s *Service) Delete(ctx context.Context, answerID, userID, quizID int) erro
 
 	return s.repo.Delete(ctx, answerID)
 }
+
+func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input domain.ChangeAnswerOrder) error {
+	//TODO implement me
+	panic("implement me")
+}

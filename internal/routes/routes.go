@@ -99,6 +99,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				question.GET("", questionHandlers.GetQuizQuestions)
 				question.GET("/all", questionHandlers.GetAllQuizQuestions)
 				question.PUT("/:questionID", questionHandlers.UpdateQuestion)
+				question.PUT("/:questionID/order", questionHandlers.ChangeOrder)
 				question.DELETE("/:questionID", questionHandlers.DeleteQuestion)
 				question.DELETE("/:questionID/image", questionHandlers.DeleteImage)
 

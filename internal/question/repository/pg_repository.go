@@ -145,5 +145,14 @@ func (repo *Repository) DeleteImage(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
 
+func (repo *Repository) ChangeOrder(ctx context.Context, id int, order float64) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE questions SET order_id = $1 WHERE id = $2", order, id).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

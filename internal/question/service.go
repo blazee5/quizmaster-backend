@@ -14,4 +14,5 @@ type Service interface {
 	Delete(ctx context.Context, id, userID, quizID int) error
 	UploadImage(ctx context.Context, id, userID, quizID int, filename string) error
 	DeleteImage(ctx context.Context, id, userID, quizID int) error
+	ChangeOrder(ctx context.Context, userId, quizId int, input domain.ChangeQuestionOrder) error
 }

@@ -328,3 +328,47 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 
 	return c.String(http.StatusOK, "OK")
 }
+
+func (h *Handler) ChangeOrder(c echo.Context) error {
+	var input domain.ChangeQuestionOrder
+
+	userID := c.Get("userID").(int)
+	quizID, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err = h.service.ChangeOrder(c.Request().Context(), userID, quizID, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "question not found",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while change question order_id: %v", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}

@@ -107,3 +107,19 @@ func (s *Service) DeleteImage(ctx context.Context, id, userID, quizID int) error
 
 	return s.repo.DeleteImage(ctx, id)
 }
+
+func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input domain.ChangeQuestionOrder) error {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserID != userID {
+		return http_errors.PermissionDenied
+	}
+
+	order := (input.FirstOrderID + input.SecondOrderID) / 2
+
+	return s.repo.ChangeOrder(ctx, input.QuestionID, order)
+}
