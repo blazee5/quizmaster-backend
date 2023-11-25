@@ -50,3 +50,26 @@ func (repo *Repository) Delete(ctx context.Context, answerID int) error {
 
 	return nil
 }
+
+func (repo *Repository) ChangeOrder(ctx context.Context, questionID int, input domain.ChangeAnswerOrder) error {
+	tx, err := repo.db.Beginx()
+
+	if err != nil {
+		return err
+	}
+
+	for _, item := range input.Orders {
+		_, err := tx.ExecContext(ctx, "UPDATE answers SET order_id = $1 WHERE id = $2 AND question_id = $3", item.OrderID, item.AnswerID, questionID)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}

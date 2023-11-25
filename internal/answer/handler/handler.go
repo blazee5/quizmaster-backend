@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/blazee5/quizmaster-backend/internal/answer"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
@@ -150,7 +151,15 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "bad request",
+			"message": "invalid quiz id",
+		})
+	}
+
+	questionID, err := strconv.Atoi(c.Param("questionID"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid question id",
 		})
 	}
 
@@ -168,7 +177,13 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 		})
 	}
 
-	err = h.service.ChangeOrder(c.Request().Context(), userID, quizID, input)
+	err = h.service.ChangeOrder(c.Request().Context(), userID, quizID, questionID, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "question not found",
+		})
+	}
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{

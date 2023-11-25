@@ -61,7 +61,22 @@ func (s *Service) Delete(ctx context.Context, answerID, userID, quizID int) erro
 	return s.repo.Delete(ctx, answerID)
 }
 
-func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input domain.ChangeAnswerOrder) error {
-	//TODO implement me
-	panic("implement me")
+func (s *Service) ChangeOrder(ctx context.Context, userID, quizID, questionID int, input domain.ChangeAnswerOrder) error {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserID != userID {
+		return http_errors.PermissionDenied
+	}
+
+	err = s.repo.ChangeOrder(ctx, questionID, input)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

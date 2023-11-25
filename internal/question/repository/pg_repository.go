@@ -147,10 +147,23 @@ func (repo *Repository) DeleteImage(ctx context.Context, id int) error {
 	return nil
 }
 
-func (repo *Repository) ChangeOrder(ctx context.Context, id int, order float64) error {
-	err := repo.db.QueryRowxContext(ctx, "UPDATE questions SET order_id = $1 WHERE id = $2", order, id).Err()
+func (repo *Repository) ChangeOrder(ctx context.Context, input domain.ChangeQuestionOrder) error {
+	tx, err := repo.db.Beginx()
 
 	if err != nil {
+		return err
+	}
+
+	for _, item := range input.Orders {
+		_, err := tx.ExecContext(ctx, "UPDATE questions SET order_id = $1 WHERE id = $2", item.OrderID, item.QuestionID)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 

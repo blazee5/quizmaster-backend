@@ -119,7 +119,11 @@ func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input dom
 		return http_errors.PermissionDenied
 	}
 
-	order := (input.FirstOrderID + input.SecondOrderID) / 2
+	err = s.repo.ChangeOrder(ctx, input)
 
-	return s.repo.ChangeOrder(ctx, input.QuestionID, order)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

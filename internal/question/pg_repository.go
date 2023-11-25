@@ -14,5 +14,5 @@ type Repository interface {
 	Delete(ctx context.Context, id int) error
 	UploadImage(ctx context.Context, id int, filename string) error
 	DeleteImage(ctx context.Context, id int) error
-	ChangeOrder(ctx context.Context, id int, order float64) error
+	ChangeOrder(ctx context.Context, input domain.ChangeQuestionOrder) error
 }

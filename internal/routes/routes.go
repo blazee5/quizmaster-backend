@@ -99,7 +99,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				question.GET("", questionHandlers.GetQuizQuestions)
 				question.GET("/all", questionHandlers.GetAllQuizQuestions)
 				question.PUT("/:questionID", questionHandlers.UpdateQuestion)
-				question.PUT("/:questionID/order", questionHandlers.ChangeOrder)
+				question.PUT("/order", questionHandlers.ChangeOrder)
 				question.DELETE("/:questionID", questionHandlers.DeleteQuestion)
 				question.DELETE("/:questionID/image", questionHandlers.DeleteImage)
 
@@ -111,6 +111,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				{
 					answer.POST("", answerHandlers.CreateAnswer)
 					answer.PUT("/:answerID", answerHandlers.UpdateAnswer)
+					answer.PUT("/order", answerHandlers.ChangeOrder)
 					answer.DELETE("/:answerID", answerHandlers.DeleteAnswer)
 				}
 			}

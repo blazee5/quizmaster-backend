@@ -5,7 +5,7 @@ CREATE TABLE answers(
     text VARCHAR(255) default '',
     question_id int NOT NULL,
     is_correct BOOLEAN DEFAULT false,
-    order_id INT NOT NULL,
+    order_id INT NOT NULL DEFAULT 1,
     CONSTRAINT question_id FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
