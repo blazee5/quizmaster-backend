@@ -1,6 +1,12 @@
 FROM golang:1.21
 
-COPY . /app
+WORKDIR /app
+
+COPY go.mod .
+
+RUN go mod download
+
+COPY . .
 
 WORKDIR /app/cmd
 
