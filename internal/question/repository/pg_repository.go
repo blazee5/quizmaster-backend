@@ -16,11 +16,11 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) CreateQuestion(ctx context.Context, quizID int) (int, error) {
+func (repo *Repository) CreateQuestion(ctx context.Context, quizID int, input domain.CreateQuestion) (int, error) {
 	var id int
 
-	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (quiz_id) VALUES ($1) RETURNING id",
-		quizID).Scan(&id)
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (quiz_id, order_id) VALUES ($1, $2) RETURNING id",
+		quizID, input.OrderID).Scan(&id)
 
 	if err != nil {
 		return 0, err

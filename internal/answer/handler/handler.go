@@ -24,6 +24,8 @@ func NewHandler(log *zap.SugaredLogger, service answer.Service) *Handler {
 }
 
 func (h *Handler) CreateAnswer(c echo.Context) error {
+	var input domain.CreateAnswer
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -41,7 +43,21 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.Create(c.Request().Context(), userID, quizID, questionID)
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	id, err := h.service.Create(c.Request().Context(), userID, quizID, questionID, input)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
