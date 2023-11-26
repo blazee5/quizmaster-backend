@@ -12,7 +12,10 @@ type Answer struct {
 }
 
 type UserAnswer struct {
-	ID int `json:"id" validate:"required"`
+	AttemptID  int    `json:"attempt_id" validate:"required"`
+	QuestionID int    `json:"question_id" validate:"required"`
+	AnswerID   int    `json:"answer_id" validate:"required"`
+	AnswerText string `json:"answer_text"`
 }
 
 type OrderAnswerItem struct {

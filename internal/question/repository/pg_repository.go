@@ -29,6 +29,16 @@ func (repo *Repository) CreateQuestion(ctx context.Context, quizID int, input do
 	return id, nil
 }
 
+func (repo *Repository) GetQuestionByID(ctx context.Context, id int) (models.Question, error) {
+	var question models.Question
+
+	if err := repo.db.QueryRowxContext(ctx, "SELECT * FROM questions WHERE id = $1", id).StructScan(&question); err != nil {
+		return models.Question{}, err
+	}
+
+	return question, nil
+}
+
 func (repo *Repository) GetQuestionsByID(ctx context.Context, id int) ([]models.Question, error) {
 	questions := make([]models.Question, 0)
 

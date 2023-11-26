@@ -37,7 +37,7 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 	var userResults []models.UserResult
 	processedQuizzes := make([]int, 0)
 
-	query := `SELECT q.id AS quiz_id, q.title, q.description, q.image, q.user_id, q.created_at, r.score, r.percent, r.created_at
+	query := `SELECT q.id AS quiz_id, q.title, q.description, q.image, q.user_id, q.created_at, r.score, r.is_completed, r.created_at
 			  FROM results r
 		      INNER JOIN quizzes q ON r.quiz_id = q.id 
 		      WHERE r.user_id = $1 
@@ -65,7 +65,7 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 			&quiz.UserID,
 			&quiz.CreatedAt,
 			&userResult.Score,
-			&userResult.Percent,
+			&userResult.IsCompleted,
 			&userResult.CreatedAt,
 		)
 		if err != nil {

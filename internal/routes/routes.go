@@ -22,6 +22,9 @@ import (
 	quizHandler "github.com/blazee5/quizmaster-backend/internal/quiz/handler"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz/repository"
 	quizService "github.com/blazee5/quizmaster-backend/internal/quiz/service"
+	resultHandler "github.com/blazee5/quizmaster-backend/internal/result/handler"
+	resultRepo "github.com/blazee5/quizmaster-backend/internal/result/repository"
+	resultService "github.com/blazee5/quizmaster-backend/internal/result/service"
 	userHandler "github.com/blazee5/quizmaster-backend/internal/user/handler"
 	userRepo "github.com/blazee5/quizmaster-backend/internal/user/repository"
 	userService "github.com/blazee5/quizmaster-backend/internal/user/service"
@@ -76,6 +79,13 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
 
+		questionRepos := questionRepo.NewRepository(s.db)
+		answerRepos := answerRepo.NewRepository(s.db)
+
+		resultRepos := resultRepo.NewRepository(s.db)
+		resultServices := resultService.NewService(s.log, resultRepos, quizRepos, questionRepos, answerRepos)
+		resultHandlers := resultHandler.NewHandler(s.log, resultServices)
+
 		quiz := e.Group("/quiz")
 		{
 			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
@@ -84,11 +94,11 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			// quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
 			quiz.PUT("/:id", quizHandlers.UpdateQuiz, AuthMiddleware)
-			quiz.POST("/:id/save", quizHandlers.SaveResult, AuthMiddleware)
+			quiz.POST("/:id/start", resultHandlers.NewResult, AuthMiddleware)
+			quiz.POST("/:id/save", resultHandlers.SaveResult, AuthMiddleware)
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
 			quiz.DELETE("/:id/image", quizHandlers.DeleteImage, AuthMiddleware)
 
-			questionRepos := questionRepo.NewRepository(s.db)
 			questionServices := questionService.NewService(s.log, questionRepos, quizRepos)
 			questionHandlers := questionHandler.NewHandler(s.log, questionServices)
 
@@ -103,7 +113,6 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				question.DELETE("/:questionID", questionHandlers.DeleteQuestion)
 				question.DELETE("/:questionID/image", questionHandlers.DeleteImage)
 
-				answerRepos := answerRepo.NewRepository(s.db)
 				answerServices := answerService.NewService(s.log, answerRepos, quizRepos)
 				answerHandlers := answerHandler.NewHandler(s.log, answerServices)
 
