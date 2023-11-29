@@ -3,7 +3,7 @@ package domain
 type Answer struct {
 	Text       string `json:"text"`
 	IsCorrect  bool   `json:"is_correct"`
-	OrderID    int    `json:"order_id" validate:"required"`
+	OrderID    int    `json:"order_id"`
 	QuestionID int
 }
 
