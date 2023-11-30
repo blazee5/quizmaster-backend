@@ -6,6 +6,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
+	"slices"
 )
 
 type Repository struct {
@@ -16,11 +17,11 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) CreateQuestion(ctx context.Context, quizID int, input domain.CreateQuestion) (int, error) {
+func (repo *Repository) CreateQuestion(ctx context.Context, quizID int) (int, error) {
 	var id int
 
-	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (quiz_id, order_id) VALUES ($1, $2) RETURNING id",
-		quizID, input.OrderID).Scan(&id)
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO questions (quiz_id) VALUES ($1) RETURNING id",
+		quizID).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -42,35 +43,45 @@ func (repo *Repository) GetQuestionByID(ctx context.Context, id int) (models.Que
 func (repo *Repository) GetQuestionsByID(ctx context.Context, id int) ([]models.Question, error) {
 	questions := make([]models.Question, 0)
 
-	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
+	rows, err := repo.db.QueryxContext(ctx,
+		`SELECT q.id, q.title, q.image, q.quiz_id, q.type, q.order_id, a.id,
+     	a.text, a.question_id, a.order_id
+		FROM questions q
+		JOIN answers a ON a.question_id = q.id
+		WHERE quiz_id = $1 AND q.type = 'choice'
+		ORDER BY q.order_id, a.order_id ASC
+	`, id)
+
+	if err != nil {
 		return nil, err
 	}
 
-	if len(questions) == 0 {
-		return nil, sql.ErrNoRows
-	}
+	defer rows.Close()
 
-	answers := make([]models.Answer, 0)
+	for rows.Next() {
+		var question models.Question
+		var answer models.Answer
 
-	query := `
-        SELECT id, text, question_id, order_id
-        FROM answers
-        WHERE question_id IN (
-            SELECT id
-            FROM questions
-            WHERE quiz_id = $1
-        )`
+		err = rows.Scan(&question.ID, &question.Title, &question.Image, &question.QuizID, &question.Type, &question.OrderID, &answer.ID, &answer.Text, &answer.QuestionID, &answer.OrderID)
 
-	if err := repo.db.SelectContext(ctx, &answers, query, id); err != nil {
-		return nil, err
-	}
-
-	for i := range questions {
-		for _, answer := range answers {
-			if answer.QuestionID == questions[i].ID {
-				questions[i].Answers = append(questions[i].Answers, answer)
-			}
+		if err != nil {
+			return nil, err
 		}
+
+		question.Answers = append(question.Answers, answer)
+
+		if !slices.ContainsFunc(questions, func(n models.Question) bool {
+			return n.ID == question.ID
+		}) {
+			questions = append(questions, question)
+		} else {
+			idx := slices.IndexFunc(questions, func(n models.Question) bool {
+				return n.ID == question.ID
+			})
+
+			questions[idx].Answers = append(questions[idx].Answers, answer)
+		}
+
 	}
 
 	return questions, nil
@@ -79,7 +90,7 @@ func (repo *Repository) GetQuestionsByID(ctx context.Context, id int) ([]models.
 func (repo *Repository) GetQuestionsWithAnswers(ctx context.Context, id int) ([]models.QuestionWithAnswers, error) {
 	questions := make([]models.QuestionWithAnswers, 0)
 
-	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1", id); err != nil {
+	if err := repo.db.SelectContext(ctx, &questions, "SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_id ASC", id); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +107,7 @@ func (repo *Repository) GetQuestionsWithAnswers(ctx context.Context, id int) ([]
             SELECT id
             FROM questions
             WHERE quiz_id = $1
-        )`
+        ) ORDER BY order_id ASC`
 
 	if err := repo.db.SelectContext(ctx, &answers, query, id); err != nil {
 		return nil, err

@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, input domain.SignUpRequest) (int, error)
-	GetAll(ctx context.Context) ([]models.User, error)
+	GetAll(ctx context.Context) ([]models.ShortUser, error)
 	Update(ctx context.Context, id int, input domain.User) error
 	Delete(ctx context.Context, id int) error
 }

@@ -28,13 +28,13 @@ func (repo *Repository) Create(ctx context.Context, input domain.SignUpRequest) 
 	return id, nil
 }
 
-func (repo *Repository) GetAll(ctx context.Context) ([]models.User, error) {
-	users := make([]models.User, 0)
+func (repo *Repository) GetAll(ctx context.Context) ([]models.ShortUser, error) {
+	users := make([]models.ShortUser, 0)
 
 	err := repo.db.SelectContext(ctx, &users, "SELECT * FROM users")
 
 	if err != nil {
-		return make([]models.User, 0), err
+		return nil, err
 	}
 
 	return users, nil

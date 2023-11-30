@@ -23,7 +23,7 @@ func (s *Service) CreateUser(ctx context.Context, input domain.SignUpRequest) (i
 	return s.repo.Create(ctx, input)
 }
 
-func (s *Service) GetUsers(ctx context.Context) ([]models.User, error) {
+func (s *Service) GetUsers(ctx context.Context) ([]models.ShortUser, error) {
 	return s.repo.GetAll(ctx)
 }
 

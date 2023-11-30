@@ -8,7 +8,7 @@ import (
 
 type Service interface {
 	CreateUser(ctx context.Context, input domain.SignUpRequest) (int, error)
-	GetUsers(ctx context.Context) ([]models.User, error)
+	GetUsers(ctx context.Context) ([]models.ShortUser, error)
 	UpdateUser(ctx context.Context, id int, input domain.User) error
 	DeleteUser(ctx context.Context, id int) error
 }
