@@ -25,14 +25,10 @@ func NewService(log *zap.SugaredLogger, repo result.Repository, quizRepo quiz.Re
 }
 
 func (s *Service) NewResult(ctx context.Context, userID int, quizID int) (int, error) {
-	if _, err := s.quizRepo.GetByID(ctx, quizID); err != nil {
+	_, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
 		return 0, err
-	}
-
-	id, err := s.repo.GetByUserID(ctx, userID)
-
-	if err == nil {
-		return id.ID, err
 	}
 
 	return s.repo.NewResult(ctx, userID, quizID)
