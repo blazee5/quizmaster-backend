@@ -39,6 +39,19 @@ func (repo *Repository) GetByID(ctx context.Context, id int) (models.Result, err
 	return result, nil
 }
 
+func (repo *Repository) GetByQuizID(ctx context.Context, quizID int) ([]models.UsersResult, error) {
+	var results []models.UsersResult
+
+	err := repo.db.SelectContext(ctx, &results, `SELECT r.id, r.score, r.created_at, u.username
+		FROM results r JOIN users u ON u.id = r.user_id WHERE r.quiz_id = $1 AND is_completed = true`, quizID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
 func (repo *Repository) GetByUserID(ctx context.Context, id int) (models.Result, error) {
 	var result models.Result
 
@@ -83,4 +96,18 @@ func (repo *Repository) UpdateResult(ctx context.Context, id, userID, score int)
 	}
 
 	return nil
+}
+
+func (repo *Repository) SubmitResult(ctx context.Context, userID, resultID int) (models.UsersResult, error) {
+	var result models.UsersResult
+
+	err := repo.db.QueryRowxContext(ctx, "UPDATE results SET is_completed = true WHERE id = $1 AND user_id = $2", resultID, userID).Err()
+
+	if err != nil {
+		return models.UsersResult{}, nil
+	}
+
+	err = repo.db.QueryRowxContext(ctx, "SELECT id, score, created_at FROM results WHERE id = $1", resultID).StructScan(&result)
+
+	return result, nil
 }

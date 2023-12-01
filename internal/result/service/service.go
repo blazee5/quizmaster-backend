@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/blazee5/quizmaster-backend/internal/answer"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/blazee5/quizmaster-backend/internal/question"
 	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/internal/result"
@@ -132,4 +133,16 @@ func (s *Service) ProcessInputAnswer(ctx context.Context, questionID, userID int
 	}
 
 	return nil
+}
+
+func (s *Service) GetResultsByQuizID(ctx context.Context, quizID int) ([]models.UsersResult, error) {
+	return s.repo.GetByQuizID(ctx, quizID)
+}
+
+func (s *Service) SubmitResult(ctx context.Context, userID, quizID int, input domain.SubmitResult) (models.UsersResult, error) {
+	if _, err := s.quizRepo.GetByID(ctx, quizID); err != nil {
+		return models.UsersResult{}, err
+	}
+
+	return s.repo.SubmitResult(ctx, userID, input.AttemptID)
 }

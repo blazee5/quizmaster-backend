@@ -11,6 +11,13 @@ type Result struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
+type UsersResult struct {
+	ID        int       `json:"id" db:"id"`
+	Username  string    `json:"username,omitempty" db:"username"`
+	Score     int       `json:"score" db:"score"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+}
+
 type UserResult struct {
 	Quiz        Quiz      `json:"quiz" db:"quiz"`
 	Score       int       `json:"score" db:"score"`

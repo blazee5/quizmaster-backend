@@ -9,6 +9,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/logger"
 	libValidator "github.com/blazee5/quizmaster-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
+	socketio "github.com/googollee/go-socket.io"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -49,7 +50,8 @@ func main() {
 	log := logger.NewLogger()
 	db := postgres.New()
 	rdb := redis.NewRedisClient()
-	esclient := elastic.NewElasticSearchClient(log)
+	esClient := elastic.NewElasticSearchClient(log)
+	ws := socketio.NewServer(nil)
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -61,10 +63,16 @@ func main() {
 	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
-	server := routes.NewServer(log, db, rdb, esclient)
+	server := routes.NewServer(log, db, rdb, esClient, ws)
 	server.InitRoutes(e)
 
-	log.Fatal(e.Start(os.Getenv("PORT")))
+	go func() {
+		log.Fatal(e.Start(os.Getenv("PORT")))
+	}()
+
+	go func() {
+		log.Fatal(ws.Serve())
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
@@ -76,5 +84,9 @@ func main() {
 
 	if err := db.Close(); err != nil {
 		log.Infof("Error occured on db connection close: %v", err)
+	}
+
+	if err := ws.Close(); err != nil {
+		log.Infof("Error while socket server shutting down: %v", err)
 	}
 }
