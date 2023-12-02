@@ -20,9 +20,7 @@ func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socketio.Ser
 	return &Handler{log: log, service: service, ws: ws}
 }
 
-func (h *Handler) GetResults(conn socketio.Conn) interface{} {
-	url := conn.URL()
-	quizID := url.Query().Get("quizID")
+func (h *Handler) GetResults(conn socketio.Conn, quizID string) interface{} {
 	conn.Join("quiz:" + quizID)
 
 	id, err := strconv.Atoi(quizID)
