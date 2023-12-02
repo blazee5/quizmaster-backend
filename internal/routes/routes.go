@@ -31,10 +31,10 @@ import (
 	userRepo "github.com/blazee5/quizmaster-backend/internal/user/repository"
 	userService "github.com/blazee5/quizmaster-backend/internal/user/service"
 	"github.com/elastic/go-elasticsearch/v8"
-	socketio "github.com/googollee/go-socket.io"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
+	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.uber.org/zap"
 )
 
@@ -180,7 +180,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 	})
 
 	// websockets
-	s.ws.OnConnect("/", func(s socketio.Conn) error {
+	s.ws.OnConnect("/", func(s socketio.Conn, msg map[string]interface{}) error {
 		s.SetContext(context.Background())
 
 		return nil

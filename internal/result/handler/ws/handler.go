@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/blazee5/quizmaster-backend/internal/result"
-	socketio "github.com/googollee/go-socket.io"
+	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.uber.org/zap"
 	"strconv"
 )
