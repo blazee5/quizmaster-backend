@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"context"
 	adminAuthHandler "github.com/blazee5/quizmaster-backend/internal/admin/auth/handler"
 	adminAuthRepo "github.com/blazee5/quizmaster-backend/internal/admin/auth/repository"
 	adminAuthService "github.com/blazee5/quizmaster-backend/internal/admin/auth/service"
@@ -31,10 +30,10 @@ import (
 	userRepo "github.com/blazee5/quizmaster-backend/internal/user/repository"
 	userService "github.com/blazee5/quizmaster-backend/internal/user/service"
 	"github.com/elastic/go-elasticsearch/v8"
-	socketio "github.com/googollee/go-socket.io"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
+	"github.com/zishang520/socket.io/v2/socket"
 	"go.uber.org/zap"
 )
 
@@ -43,10 +42,10 @@ type Server struct {
 	db       *sqlx.DB
 	rdb      *redis.Client
 	esClient *elasticsearch.Client
-	ws       *socketio.Server
+	ws       *socket.Server
 }
 
-func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server) *Server {
+func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socket.Server) *Server {
 	return &Server{log: log, db: db, rdb: rdb, esClient: esClient, ws: ws}
 }
 
@@ -91,7 +90,11 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		resultHandlers := resultHandler.NewHandler(s.log, resultServices, s.ws)
 		resultSocketHandlers := ws.NewHandler(s.log, resultServices, s.ws)
 
-		s.ws.OnEvent("/results", "message", resultSocketHandlers.GetResults)
+		err := s.ws.On("message", resultSocketHandlers.GetResults)
+
+		if err != nil {
+			s.log.Infof("ws error: %v", err)
+		}
 
 		quiz := e.Group("/quiz")
 		{
@@ -175,14 +178,11 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 	e.Static("/public", "public")
 	e.Any("/socket.io/", func(c echo.Context) error {
-		s.ws.ServeHTTP(c.Response(), c.Request())
+		s.ws.ServeHandler(nil)
 		return nil
 	})
 
 	// websockets
-	s.ws.OnConnect("/", func(s socketio.Conn) error {
-		s.SetContext(context.Background())
-
-		return nil
+	s.ws.On("connection", func(clients ...any) {
 	})
 }

@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/blazee5/quizmaster-backend/internal/result"
-	socketio "github.com/googollee/go-socket.io"
+	"github.com/labstack/gommon/log"
+	"github.com/zishang520/socket.io/v2/socket"
 	"go.uber.org/zap"
 	"strconv"
 )
@@ -13,35 +14,35 @@ import (
 type Handler struct {
 	log     *zap.SugaredLogger
 	service result.Service
-	ws      *socketio.Server
+	ws      *socket.Server
 }
 
-func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socketio.Server) *Handler {
+func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socket.Server) *Handler {
 	return &Handler{log: log, service: service, ws: ws}
 }
 
-func (h *Handler) GetResults(conn socketio.Conn) interface{} {
-	url := conn.URL()
-	quizID := url.Query().Get("quizID")
-	conn.Join("quiz:" + quizID)
+func (h *Handler) GetResults(msg ...any) {
+	quizID := msg[0].(string)
+	h.ws.SocketsJoin(socket.Room("quiz:" + quizID))
 
 	id, err := strconv.Atoi(quizID)
 
 	if err != nil {
-		return "invalid quizID"
+		log.Info("invalid quizID")
+		return
 	}
 
 	results, err := h.service.GetResultsByQuizID(context.Background(), id)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return "quiz not found"
+		log.Info("quiz not found")
+		return
 	}
 
 	if err != nil {
 		h.log.Infof("error while get quiz results: %s", err)
-		return "server error"
+		return
 	}
 
-	conn.Emit("message", results)
-	return results
+	h.ws.Emit("message", results)
 }

@@ -9,11 +9,11 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/logger"
 	libValidator "github.com/blazee5/quizmaster-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
-	socketio "github.com/googollee/go-socket.io"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/swaggo/echo-swagger"
+	"github.com/zishang520/socket.io/v2/socket"
 	"net/http"
 	"os"
 	"os/signal"
@@ -51,7 +51,7 @@ func main() {
 	db := postgres.New()
 	rdb := redis.NewRedisClient()
 	esClient := elastic.NewElasticSearchClient(log)
-	ws := socketio.NewServer(nil)
+	ws := socket.NewServer(nil, nil)
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -70,13 +70,11 @@ func main() {
 		log.Fatal(e.Start(os.Getenv("PORT")))
 	}()
 
-	go func() {
-		log.Fatal(ws.Serve())
-	}()
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
+
+	ws.Close(nil)
 
 	if err := e.Shutdown(context.Background()); err != nil {
 		log.Infof("Error occured on server shutting down: %v", err)
@@ -84,9 +82,5 @@ func main() {
 
 	if err := db.Close(); err != nil {
 		log.Infof("Error occured on db connection close: %v", err)
-	}
-
-	if err := ws.Close(); err != nil {
-		log.Infof("Error while socket server shutting down: %v", err)
 	}
 }

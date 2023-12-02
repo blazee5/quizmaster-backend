@@ -9,8 +9,8 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
-	socketio "github.com/googollee/go-socket.io"
 	"github.com/labstack/echo/v4"
+	"github.com/zishang520/socket.io/v2/socket"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -19,10 +19,10 @@ import (
 type Handler struct {
 	log     *zap.SugaredLogger
 	service result.Service
-	ws      *socketio.Server
+	ws      *socket.Server
 }
 
-func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socketio.Server) *Handler {
+func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socket.Server) *Handler {
 	return &Handler{log: log, service: service, ws: ws}
 }
 
@@ -172,7 +172,7 @@ func (h *Handler) UpdateResults(quizID int) interface{} {
 		return "server error"
 	}
 
-	h.ws.BroadcastToRoom("/results", "quiz:"+id, "message", results)
+	h.ws.To(socket.Room("quiz:"+id)).Emit("message", results)
 
 	return nil
 }
