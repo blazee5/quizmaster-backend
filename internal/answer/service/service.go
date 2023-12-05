@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/blazee5/quizmaster-backend/internal/answer"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/internal/models"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"go.uber.org/zap"
@@ -31,6 +32,16 @@ func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (i
 	}
 
 	return s.repo.Create(ctx, questionID)
+}
+
+func (s *Service) GetByQuestionID(ctx context.Context, quizID, questionID int) ([]models.AnswerInfo, error) {
+	_, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetAnswersInfoByQuestionID(ctx, questionID)
 }
 
 func (s *Service) Update(ctx context.Context, answerID, userID, quizID int, input domain.Answer) error {

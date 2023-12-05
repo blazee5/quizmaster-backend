@@ -7,8 +7,9 @@ import (
 )
 
 type Repository interface {
-	GetByID(ctx context.Context, id int) (models.Answer, error)
-	GetAnswersByQuestionID(ctx context.Context, id int) ([]models.Answer, error)
+	GetByID(ctx context.Context, ID int) (models.Answer, error)
+	GetAnswersByQuestionID(ctx context.Context, questionID int) ([]models.Answer, error)
+	GetAnswersInfoByQuestionID(ctx context.Context, questionID int) ([]models.AnswerInfo, error)
 	Create(ctx context.Context, questionID int) (int, error)
 	Update(ctx context.Context, answerID int, input domain.Answer) error
 	Delete(ctx context.Context, answerID int) error

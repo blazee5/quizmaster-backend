@@ -115,7 +115,6 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				question.POST("", questionHandlers.CreateQuestion)
 				question.POST("/:questionID/image", questionHandlers.UploadImage)
 				question.GET("", questionHandlers.GetQuizQuestions)
-				question.GET("/all", questionHandlers.GetAllQuizQuestions)
 				question.PUT("/:questionID", questionHandlers.UpdateQuestion)
 				question.PUT("/order", questionHandlers.ChangeOrder)
 				question.DELETE("/:questionID", questionHandlers.DeleteQuestion)
@@ -126,6 +125,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 				answer := question.Group("/:questionID/answers")
 				{
+					answer.GET("", answerHandlers.GetAnswers)
 					answer.POST("", answerHandlers.CreateAnswer)
 					answer.PUT("/:answerID", answerHandlers.UpdateAnswer)
 					answer.PUT("/order", answerHandlers.ChangeOrder)

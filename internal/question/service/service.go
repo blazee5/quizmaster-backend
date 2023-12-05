@@ -35,21 +35,7 @@ func (s *Service) Create(ctx context.Context, userID, quizID int) (int, error) {
 }
 
 func (s *Service) GetQuestionsByID(ctx context.Context, id int) ([]models.Question, error) {
-	return s.repo.GetQuestionsByID(ctx, id)
-}
-
-func (s *Service) GetAllQuestionsByID(ctx context.Context, id, userID int) ([]models.QuestionWithAnswers, error) {
-	quiz, err := s.quizRepo.GetByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if quiz.UserID != userID {
-		return nil, http_errors.PermissionDenied
-	}
-
-	return s.repo.GetQuestionsWithAnswers(ctx, id)
+	return s.repo.GetQuestionsByQuizID(ctx, id)
 }
 
 func (s *Service) Update(ctx context.Context, id, userID, quizID int, input domain.Question) error {

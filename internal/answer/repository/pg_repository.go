@@ -28,10 +28,10 @@ func (repo *Repository) Create(ctx context.Context, questionID int) (int, error)
 	return id, nil
 }
 
-func (repo *Repository) GetByID(ctx context.Context, id int) (models.Answer, error) {
+func (repo *Repository) GetByID(ctx context.Context, ID int) (models.Answer, error) {
 	var answer models.Answer
 
-	err := repo.db.QueryRowxContext(ctx, "SELECT * FROM answers WHERE id = $1", id).StructScan(&answer)
+	err := repo.db.QueryRowxContext(ctx, "SELECT * FROM answers WHERE id = $1", ID).StructScan(&answer)
 
 	if err != nil {
 		return models.Answer{}, err
@@ -40,10 +40,23 @@ func (repo *Repository) GetByID(ctx context.Context, id int) (models.Answer, err
 	return answer, nil
 }
 
-func (repo *Repository) GetAnswersByQuestionID(ctx context.Context, id int) ([]models.Answer, error) {
+func (repo *Repository) GetAnswersByQuestionID(ctx context.Context, questionID int) ([]models.Answer, error) {
 	answers := make([]models.Answer, 0)
 
-	err := repo.db.SelectContext(ctx, &answers, "SELECT * FROM answers WHERE question_id = $1", id)
+	err := repo.db.SelectContext(ctx, &answers, "SELECT * FROM answers WHERE question_id = $1", questionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return answers, nil
+}
+
+func (repo *Repository) GetAnswersInfoByQuestionID(ctx context.Context, questionID int) ([]models.AnswerInfo, error) {
+	answers := make([]models.AnswerInfo, 0)
+
+	err := repo.db.SelectContext(ctx, &answers, `SELECT a.id, a.text, a.question_id, a.order_id FROM answers a
+		WHERE a.question_id = $1 ORDER BY a.order_id ASC`, questionID)
 
 	if err != nil {
 		return nil, err

@@ -61,6 +61,35 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 	})
 }
 
+func (h *Handler) GetAnswers(c echo.Context) error {
+	quizID, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid quiz id",
+		})
+	}
+
+	questionID, err := strconv.Atoi(c.Param("questionID"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid question id",
+		})
+	}
+
+	answers, err := h.service.GetByQuestionID(c.Request().Context(), quizID, questionID)
+
+	if err != nil {
+		h.log.Infof("error while get answers by question id: %s", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, answers)
+}
+
 func (h *Handler) UpdateAnswer(c echo.Context) error {
 	var input domain.Answer
 
