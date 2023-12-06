@@ -7,6 +7,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -14,13 +15,17 @@ type Service struct {
 	log      *zap.SugaredLogger
 	repo     answer.Repository
 	quizRepo quizRepo.Repository
+	tracer   trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRepo.Repository) *Service {
-	return &Service{log: log, repo: repo, quizRepo: quizRepo}
+func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRepo.Repository, tracer trace.Tracer) *Service {
+	return &Service{log: log, repo: repo, quizRepo: quizRepo, tracer: tracer}
 }
 
 func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (int, error) {
+	ctx, span := s.tracer.Start(ctx, "answerService.Create")
+	defer span.End()
+
 	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
@@ -35,6 +40,9 @@ func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (i
 }
 
 func (s *Service) GetByQuestionID(ctx context.Context, quizID, questionID int) ([]models.AnswerInfo, error) {
+	ctx, span := s.tracer.Start(ctx, "answerService.GetByQuestionID")
+	defer span.End()
+
 	_, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
@@ -45,6 +53,9 @@ func (s *Service) GetByQuestionID(ctx context.Context, quizID, questionID int) (
 }
 
 func (s *Service) Update(ctx context.Context, answerID, userID, quizID int, input domain.Answer) error {
+	ctx, span := s.tracer.Start(ctx, "answerService.Update")
+	defer span.End()
+
 	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
@@ -59,6 +70,9 @@ func (s *Service) Update(ctx context.Context, answerID, userID, quizID int, inpu
 }
 
 func (s *Service) Delete(ctx context.Context, answerID, userID, quizID int) error {
+	ctx, span := s.tracer.Start(ctx, "answerService.Delete")
+	defer span.End()
+
 	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
@@ -73,6 +87,9 @@ func (s *Service) Delete(ctx context.Context, answerID, userID, quizID int) erro
 }
 
 func (s *Service) ChangeOrder(ctx context.Context, userID, quizID, questionID int, input domain.ChangeAnswerOrder) error {
+	ctx, span := s.tracer.Start(ctx, "answerService.ChangeOrder")
+	defer span.End()
+
 	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {

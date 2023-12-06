@@ -35,6 +35,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	socketio "github.com/vchitai/go-socket.io/v4"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -44,16 +45,17 @@ type Server struct {
 	rdb      *redis.Client
 	esClient *elasticsearch.Client
 	ws       *socketio.Server
+	tracer   trace.Tracer
 }
 
-func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server) *Server {
-	return &Server{log: log, db: db, rdb: rdb, esClient: esClient, ws: ws}
+func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer) *Server {
+	return &Server{log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer}
 }
 
 func (s *Server) InitRoutes(e *echo.Echo) {
-	authRepos := authRepo.NewRepository(s.db)
-	authServices := authService.NewService(s.log, authRepos)
-	authHandlers := authHandler.NewHandler(s.log, authServices)
+	authRepos := authRepo.NewRepository(s.db, s.tracer)
+	authServices := authService.NewService(s.log, authRepos, s.tracer)
+	authHandlers := authHandler.NewHandler(s.log, authServices, s.tracer)
 
 	auth := e.Group("/auth")
 	{
@@ -77,14 +79,14 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			user.DELETE("", userHandlers.Delete)
 		}
 
-		quizRepos := quizRepo.NewRepository(s.db)
-		quizRedisRepo := quizRepo.NewAuthRedisRepo(s.rdb)
+		quizRepos := quizRepo.NewRepository(s.db, s.tracer)
+		quizRedisRepo := quizRepo.NewQuizRedisRepo(s.rdb, s.tracer)
 		quizElasticRepo := quizRepo.NewElasticRepository(s.esClient)
-		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo)
-		quizHandlers := quizHandler.NewHandler(s.log, quizServices)
+		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo, s.tracer)
+		quizHandlers := quizHandler.NewHandler(s.log, quizServices, s.tracer)
 
-		questionRepos := questionRepo.NewRepository(s.db)
-		answerRepos := answerRepo.NewRepository(s.db)
+		questionRepos := questionRepo.NewRepository(s.db, s.tracer)
+		answerRepos := answerRepo.NewRepository(s.db, s.tracer)
 
 		resultRepos := resultRepo.NewRepository(s.db)
 		resultServices := resultService.NewService(s.log, resultRepos, quizRepos, questionRepos, answerRepos)
@@ -107,8 +109,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
 			quiz.DELETE("/:id/image", quizHandlers.DeleteImage, AuthMiddleware)
 
-			questionServices := questionService.NewService(s.log, questionRepos, quizRepos)
-			questionHandlers := questionHandler.NewHandler(s.log, questionServices)
+			questionServices := questionService.NewService(s.log, questionRepos, quizRepos, s.tracer)
+			questionHandlers := questionHandler.NewHandler(s.log, questionServices, s.tracer)
 
 			question := quiz.Group("/:id/questions", AuthMiddleware)
 			{
@@ -120,8 +122,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				question.DELETE("/:questionID", questionHandlers.DeleteQuestion)
 				question.DELETE("/:questionID/image", questionHandlers.DeleteImage)
 
-				answerServices := answerService.NewService(s.log, answerRepos, quizRepos)
-				answerHandlers := answerHandler.NewHandler(s.log, answerServices)
+				answerServices := answerService.NewService(s.log, answerRepos, quizRepos, s.tracer)
+				answerHandlers := answerHandler.NewHandler(s.log, answerServices, s.tracer)
 
 				answer := question.Group("/:questionID/answers")
 				{

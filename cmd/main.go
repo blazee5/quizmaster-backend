@@ -7,6 +7,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/db/redis"
 	"github.com/blazee5/quizmaster-backend/lib/elastic"
 	"github.com/blazee5/quizmaster-backend/lib/logger"
+	"github.com/blazee5/quizmaster-backend/lib/tracer"
 	libValidator "github.com/blazee5/quizmaster-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -52,6 +53,7 @@ func main() {
 	rdb := redis.NewRedisClient()
 	esClient := elastic.NewElasticSearchClient(log)
 	ws := socketio.NewServer(nil)
+	trace := tracer.InitTracer(os.Getenv("JAEGER_HOST"), "Quizmaster")
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -63,7 +65,7 @@ func main() {
 	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
-	server := routes.NewServer(log, db, rdb, esClient, ws)
+	server := routes.NewServer(log, db, rdb, esClient, ws, trace)
 	server.InitRoutes(e)
 
 	go func() {

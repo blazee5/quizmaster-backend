@@ -10,6 +10,8 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -18,10 +20,11 @@ import (
 type Handler struct {
 	log     *zap.SugaredLogger
 	service question.Service
+	tracer  trace.Tracer
 }
 
-func NewHandler(log *zap.SugaredLogger, service question.Service) *Handler {
-	return &Handler{log: log, service: service}
+func NewHandler(log *zap.SugaredLogger, service question.Service, tracer trace.Tracer) *Handler {
+	return &Handler{log: log, service: service, tracer: tracer}
 }
 
 // @Summary Create question
@@ -36,6 +39,9 @@ func NewHandler(log *zap.SugaredLogger, service question.Service) *Handler {
 // @Failure 500 {object} string
 // @Router /api/question [post]
 func (h *Handler) CreateQuestion(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.CreateQuestion")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -45,7 +51,7 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.Create(c.Request().Context(), userID, quizID)
+	id, err := h.service.Create(ctx, userID, quizID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -61,6 +67,10 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while create quiz: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -72,6 +82,9 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 }
 
 func (h *Handler) GetQuizQuestions(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.GetQuizQuestions")
+	defer span.End()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -80,7 +93,7 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 		})
 	}
 
-	questions, err := h.service.GetQuestionsByID(c.Request().Context(), id)
+	questions, err := h.service.GetQuestionsByID(ctx, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -90,6 +103,10 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while get questions by quiz id: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -99,6 +116,9 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 }
 
 func (h *Handler) UpdateQuestion(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.UpdateQuestion")
+	defer span.End()
+
 	var input domain.Question
 
 	userID := c.Get("userID").(int)
@@ -134,10 +154,14 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Update(c.Request().Context(), questionID, userID, quizID, input)
+	err = h.service.Update(ctx, questionID, userID, quizID, input)
 
 	if err != nil {
 		h.log.Infof("error while update question: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -147,6 +171,9 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 }
 
 func (h *Handler) DeleteQuestion(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.DeleteQuestion")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -164,7 +191,7 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Delete(c.Request().Context(), questionID, userID, quizID)
+	err = h.service.Delete(ctx, questionID, userID, quizID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -180,6 +207,10 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while delete question: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -189,6 +220,9 @@ func (h *Handler) DeleteQuestion(c echo.Context) error {
 }
 
 func (h *Handler) UploadImage(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.UploadImage")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -221,7 +255,7 @@ func (h *Handler) UploadImage(c echo.Context) error {
 		})
 	}
 
-	err = h.service.UploadImage(c.Request().Context(), questionID, userID, quizID, file.Filename)
+	err = h.service.UploadImage(ctx, questionID, userID, quizID, file.Filename)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -236,6 +270,11 @@ func (h *Handler) UploadImage(c echo.Context) error {
 	}
 
 	if err != nil {
+		h.log.Infof("error while upload question image: %v", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -245,6 +284,9 @@ func (h *Handler) UploadImage(c echo.Context) error {
 }
 
 func (h *Handler) DeleteImage(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.DeleteImage")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -272,7 +314,7 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 		}
 	}
 
-	err = h.service.DeleteImage(c.Request().Context(), questionID, userID, quizID)
+	err = h.service.DeleteImage(ctx, questionID, userID, quizID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -287,6 +329,11 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 	}
 
 	if err != nil {
+		h.log.Infof("error while delete question image: %v", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -296,6 +343,9 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 }
 
 func (h *Handler) ChangeOrder(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.ChangeOrder")
+	defer span.End()
+
 	var input domain.ChangeQuestionOrder
 
 	userID := c.Get("userID").(int)
@@ -321,7 +371,7 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 		})
 	}
 
-	err = h.service.ChangeOrder(c.Request().Context(), userID, quizID, input)
+	err = h.service.ChangeOrder(ctx, userID, quizID, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -331,6 +381,10 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while change question order_id: %v", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})

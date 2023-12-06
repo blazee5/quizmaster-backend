@@ -10,6 +10,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -17,10 +19,11 @@ import (
 type Handler struct {
 	log     *zap.SugaredLogger
 	service auth.Service
+	tracer  trace.Tracer
 }
 
-func NewHandler(log *zap.SugaredLogger, service auth.Service) *Handler {
-	return &Handler{log: log, service: service}
+func NewHandler(log *zap.SugaredLogger, service auth.Service, tracer trace.Tracer) *Handler {
+	return &Handler{log: log, service: service, tracer: tracer}
 }
 
 // @Summary Sign up
@@ -36,6 +39,9 @@ func NewHandler(log *zap.SugaredLogger, service auth.Service) *Handler {
 // @Failure 500 {object} string
 // @Router /auth/signup [post]
 func (h *Handler) SignUp(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SignUp")
+	defer span.End()
+
 	var input domain.SignUpRequest
 
 	if err := c.Bind(&input); err != nil {
@@ -52,7 +58,7 @@ func (h *Handler) SignUp(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.SignUp(c.Request().Context(), input)
+	id, err := h.service.SignUp(ctx, input)
 
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
@@ -65,6 +71,10 @@ func (h *Handler) SignUp(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while signup: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -87,6 +97,9 @@ func (h *Handler) SignUp(c echo.Context) error {
 // @Failure 500 {object} string
 // @Router /auth/signin [post]
 func (h *Handler) SignIn(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SignIn")
+	defer span.End()
+
 	var input domain.SignInRequest
 
 	if err := c.Bind(&input); err != nil {
@@ -103,7 +116,7 @@ func (h *Handler) SignIn(c echo.Context) error {
 		})
 	}
 
-	token, err := h.service.GenerateToken(c.Request().Context(), input)
+	token, err := h.service.GenerateToken(ctx, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -113,6 +126,10 @@ func (h *Handler) SignIn(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while signin: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})

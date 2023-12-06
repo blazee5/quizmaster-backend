@@ -9,6 +9,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -17,13 +18,17 @@ import (
 type Handler struct {
 	log     *zap.SugaredLogger
 	service answer.Service
+	tracer  trace.Tracer
 }
 
-func NewHandler(log *zap.SugaredLogger, service answer.Service) *Handler {
-	return &Handler{log: log, service: service}
+func NewHandler(log *zap.SugaredLogger, service answer.Service, tracer trace.Tracer) *Handler {
+	return &Handler{log: log, service: service, tracer: tracer}
 }
 
 func (h *Handler) CreateAnswer(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "answer.CreateAnswer")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -41,7 +46,7 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.Create(c.Request().Context(), userID, quizID, questionID)
+	id, err := h.service.Create(ctx, userID, quizID, questionID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -62,6 +67,9 @@ func (h *Handler) CreateAnswer(c echo.Context) error {
 }
 
 func (h *Handler) GetAnswers(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "answer.GetAnswers")
+	defer span.End()
+
 	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -78,7 +86,7 @@ func (h *Handler) GetAnswers(c echo.Context) error {
 		})
 	}
 
-	answers, err := h.service.GetByQuestionID(c.Request().Context(), quizID, questionID)
+	answers, err := h.service.GetByQuestionID(ctx, quizID, questionID)
 
 	if err != nil {
 		h.log.Infof("error while get answers by question id: %s", err)
@@ -91,6 +99,9 @@ func (h *Handler) GetAnswers(c echo.Context) error {
 }
 
 func (h *Handler) UpdateAnswer(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "answer.UpdateAnswer")
+	defer span.End()
+
 	var input domain.Answer
 
 	userID := c.Get("userID").(int)
@@ -124,7 +135,7 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Update(c.Request().Context(), answerID, userID, quizID, input)
+	err = h.service.Update(ctx, answerID, userID, quizID, input)
 
 	if err != nil {
 		h.log.Infof("error while update answer: %s", err)
@@ -137,6 +148,9 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 }
 
 func (h *Handler) DeleteAnswer(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "answer.DeleteAnswer")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -154,7 +168,7 @@ func (h *Handler) DeleteAnswer(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Delete(c.Request().Context(), answerID, userID, quizID)
+	err = h.service.Delete(ctx, answerID, userID, quizID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
@@ -173,6 +187,9 @@ func (h *Handler) DeleteAnswer(c echo.Context) error {
 }
 
 func (h *Handler) ChangeOrder(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "answer.ChangeOrder")
+	defer span.End()
+
 	var input domain.ChangeAnswerOrder
 
 	userID := c.Get("userID").(int)
@@ -206,7 +223,7 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 		})
 	}
 
-	err = h.service.ChangeOrder(c.Request().Context(), userID, quizID, questionID, input)
+	err = h.service.ChangeOrder(ctx, userID, quizID, questionID, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{

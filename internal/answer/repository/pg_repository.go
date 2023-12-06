@@ -5,17 +5,22 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Repository struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	tracer trace.Tracer
 }
 
-func NewRepository(db *sqlx.DB) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *sqlx.DB, tracer trace.Tracer) *Repository {
+	return &Repository{db: db, tracer: tracer}
 }
 
 func (repo *Repository) Create(ctx context.Context, questionID int) (int, error) {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.Create")
+	defer span.End()
+
 	var id int
 
 	err := repo.db.QueryRowxContext(ctx, "INSERT INTO answers (question_id) VALUES ($1) RETURNING id",
@@ -29,6 +34,9 @@ func (repo *Repository) Create(ctx context.Context, questionID int) (int, error)
 }
 
 func (repo *Repository) GetByID(ctx context.Context, ID int) (models.Answer, error) {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.GetByID")
+	defer span.End()
+
 	var answer models.Answer
 
 	err := repo.db.QueryRowxContext(ctx, "SELECT * FROM answers WHERE id = $1", ID).StructScan(&answer)
@@ -41,6 +49,9 @@ func (repo *Repository) GetByID(ctx context.Context, ID int) (models.Answer, err
 }
 
 func (repo *Repository) GetAnswersByQuestionID(ctx context.Context, questionID int) ([]models.Answer, error) {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.GetAnswersByQuestionID")
+	defer span.End()
+
 	answers := make([]models.Answer, 0)
 
 	err := repo.db.SelectContext(ctx, &answers, "SELECT * FROM answers WHERE question_id = $1", questionID)
@@ -53,6 +64,9 @@ func (repo *Repository) GetAnswersByQuestionID(ctx context.Context, questionID i
 }
 
 func (repo *Repository) GetAnswersInfoByQuestionID(ctx context.Context, questionID int) ([]models.AnswerInfo, error) {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.GetAnswersInfoByQuestionID")
+	defer span.End()
+
 	answers := make([]models.AnswerInfo, 0)
 
 	err := repo.db.SelectContext(ctx, &answers, `SELECT a.id, a.text, a.question_id, a.order_id FROM answers a
@@ -66,6 +80,9 @@ func (repo *Repository) GetAnswersInfoByQuestionID(ctx context.Context, question
 }
 
 func (repo *Repository) Update(ctx context.Context, answerID int, input domain.Answer) error {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.Update")
+	defer span.End()
+
 	err := repo.db.QueryRowxContext(ctx, `UPDATE answers SET
 		text = $1,
 		is_correct = $2
@@ -80,6 +97,9 @@ func (repo *Repository) Update(ctx context.Context, answerID int, input domain.A
 }
 
 func (repo *Repository) Delete(ctx context.Context, answerID int) error {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.Delete")
+	defer span.End()
+
 	err := repo.db.QueryRowxContext(ctx, `DELETE FROM answers WHERE id = $1`, answerID).Err()
 
 	if err != nil {
@@ -90,6 +110,9 @@ func (repo *Repository) Delete(ctx context.Context, answerID int) error {
 }
 
 func (repo *Repository) ChangeOrder(ctx context.Context, questionID int, input domain.ChangeAnswerOrder) error {
+	ctx, span := repo.tracer.Start(ctx, "answerRepo.ChangeOrder")
+	defer span.End()
+
 	tx, err := repo.db.Beginx()
 
 	if err != nil {

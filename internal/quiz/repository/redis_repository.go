@@ -4,20 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/blazee5/quizmaster-backend/internal/models"
-	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 	"time"
 )
 
-type quizRedisRepo struct {
+type QuizRedisRepo struct {
 	redisClient *redis.Client
+	tracer      trace.Tracer
 }
 
-func NewAuthRedisRepo(redisClient *redis.Client) quiz.RedisRepository {
-	return &quizRedisRepo{redisClient: redisClient}
+func NewQuizRedisRepo(redisClient *redis.Client, tracer trace.Tracer) *QuizRedisRepo {
+	return &QuizRedisRepo{redisClient: redisClient, tracer: tracer}
 }
 
-func (repo *quizRedisRepo) GetByIDCtx(ctx context.Context, key string) (*models.Quiz, error) {
+func (repo *QuizRedisRepo) GetByIDCtx(ctx context.Context, key string) (*models.Quiz, error) {
+	ctx, span := repo.tracer.Start(ctx, "quizRedisRepo.GetByIDCtx")
+	defer span.End()
+
 	quizBytes, err := repo.redisClient.Get(ctx, "quiz:"+key).Bytes()
 
 	if err != nil {
@@ -33,7 +37,10 @@ func (repo *quizRedisRepo) GetByIDCtx(ctx context.Context, key string) (*models.
 	return quiz, nil
 }
 
-func (repo *quizRedisRepo) SetQuizCtx(ctx context.Context, key string, seconds int, quiz *models.Quiz) error {
+func (repo *QuizRedisRepo) SetQuizCtx(ctx context.Context, key string, seconds int, quiz *models.Quiz) error {
+	ctx, span := repo.tracer.Start(ctx, "quizRedisRepo.SetQuizCtx")
+	defer span.End()
+
 	quizBytes, err := json.Marshal(quiz)
 
 	if err != nil {
@@ -47,7 +54,10 @@ func (repo *quizRedisRepo) SetQuizCtx(ctx context.Context, key string, seconds i
 	return nil
 }
 
-func (repo *quizRedisRepo) DeleteQuizCtx(ctx context.Context, key string) error {
+func (repo *QuizRedisRepo) DeleteQuizCtx(ctx context.Context, key string) error {
+	ctx, span := repo.tracer.Start(ctx, "quizRedisRepo.DeleteQuizCtx")
+	defer span.End()
+
 	if err := repo.redisClient.Del(ctx, key).Err(); err != nil {
 		return err
 	}
