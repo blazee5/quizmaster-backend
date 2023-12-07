@@ -20,15 +20,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.tag }}
-      - name: Check if tag exists
-        run: |
-          git fetch --all --tags
-          if ! git tag | grep -q "^${{ github.event.inputs.tag }}$"; then
-            echo "error: Tag '${{ github.event.inputs.tag }}' not found"
-            exit 1
-          fi
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -39,9 +30,6 @@ jobs:
           go build -o quizmaster-backend ./cmd/sso
       - name: Test
         run: go test -v ./...
-      - name: Build migrator
-        run: |
-          go build -o migrator ./cmd/migrator
       - name: Deploy to VM
         run: |
           sudo apt-get install -y ssh rsync
