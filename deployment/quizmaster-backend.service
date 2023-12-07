@@ -3,9 +3,9 @@ Description=Quizmaster Backend
 After=network.target
 
 [Service]
-User=root
-WorkingDirectory=/root/apps/quizmaster-backend
-ExecStart=/root/apps/quizmaster-backend/quizmaster-backend --config=/root/apps/grpc-auth/config/prod.yaml
+User=blaze
+WorkingDirectory=/home/blaze/apps/quizmaster-backend
+ExecStart=/home/blaze/apps/quizmaster-backend/quizmaster-backend --config=/home/blaze/apps/quizmaster-backend/cmd/.env_example
 Restart=always
 RestartSec=4
 StandardOutput=inherit
