@@ -27,7 +27,7 @@ jobs:
       - name: Build app
         run: |
           go mod download
-          go build -o quizmaster-backend ./cmd/sso
+          go build -o quizmaster-backend ./cmd
       - name: Test
         run: go test -v ./...
       - name: Deploy to VM
