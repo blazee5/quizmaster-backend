@@ -1,22 +1,34 @@
 package elastic
 
 import (
-	"fmt"
+	"crypto/tls"
 	"github.com/elastic/go-elasticsearch/v8"
 	"go.uber.org/zap"
+	"net/http"
+	"os"
 )
 
 func NewElasticSearchClient(log *zap.SugaredLogger) *elasticsearch.Client {
-	es, err := elasticsearch.NewDefaultClient()
+	cfg := elasticsearch.Config{
+		Username:  os.Getenv("ELASTIC_USER"),
+		Password:  os.Getenv("ELASTIC_PASSWORD"),
+		Addresses: []string{os.Getenv("ELASTIC_HOST")},
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		fmt.Println("error while connect to elasticsearch")
+		log.Fatalf("error while connect to elasticsearch: %v", err)
 	}
 
-	//res, err := es.Info()
-	//if err != nil {
-	//	fmt.Printf("Error getting response: %s", err)
-	//}
-	//defer res.Body.Close()
+	res, err := es.Info()
+	if err != nil {
+		log.Fatalf("Error getting response: %v", err)
+	}
+	defer res.Body.Close()
 
 	return es
 }

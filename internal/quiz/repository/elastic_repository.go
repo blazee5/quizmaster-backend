@@ -1,48 +1,101 @@
 package repository
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"fmt"
+	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
 type ElasticRepository struct {
-	esclient *elasticsearch.Client
+	client *elasticsearch.Client
 }
 
-func NewElasticRepository(esclient *elasticsearch.Client) *ElasticRepository {
-	return &ElasticRepository{esclient: esclient}
+func NewElasticRepository(client *elasticsearch.Client) *ElasticRepository {
+	return &ElasticRepository{client: client}
 }
 
-func (repo *ElasticRepository) CreateIndex(ctx context.Context, input domain.Quiz) error {
-	_, err := json.Marshal(input)
-
+func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.Quiz) error {
+	data, err := json.Marshal(input)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal quiz: %w", err)
 	}
 
-	//res, err := repo.esclient.Create("quizzes", input., quizBytes)
-	//fmt.Println(res)
-	//
+	resp, err := repo.client.Index(
+		"quizzes",
+		bytes.NewReader(data),
+		repo.client.Index.WithContext(ctx),
+	)
+
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to index quiz: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.IsError() {
+		return fmt.Errorf("error indexing quiz: %v", resp.String())
 	}
 
 	return nil
 }
 
-func (repo *ElasticRepository) UpdateIndex(ctx context.Context, input domain.Quiz) error {
-	//TODO implement me
-	panic("implement me")
-}
+var (
+	searchFields = []string{"title", "description"}
+)
 
-func (repo *ElasticRepository) DeleteIndex(ctx context.Context, input domain.Quiz) error {
-	//TODO implement me
-	panic("implement me")
-}
+func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([]models.QuizInfo, error) {
+	query := map[string]any{
+		"query": map[string]any{
+			"multi_match": map[string]any{
+				"query":     input,
+				"fuzziness": 2,
+				"fields":    searchFields,
+			},
+		},
+	}
 
-func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([]domain.Quiz, error) {
-	//TODO implement me
-	panic("implement me")
+	dataBytes, err := json.Marshal(&query)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := repo.client.Search(
+		repo.client.Search.WithContext(ctx),
+		repo.client.Search.WithIndex("quizzes"),
+		repo.client.Search.WithBody(bufio.NewReader(bytes.NewReader(dataBytes))),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.IsError() {
+		return nil, err
+	}
+
+	type EsHits struct {
+		Hits struct {
+			Total struct {
+				Value int64 `json:"value"`
+			} `json:"total"`
+			Hits []struct {
+				Source models.QuizInfo `json:"_source"`
+			} `json:"hits"`
+		} `json:"hits"`
+	}
+
+	var hits EsHits
+	if err := json.NewDecoder(response.Body).Decode(&hits); err != nil {
+		return nil, err
+	}
+
+	quizzes := make([]models.QuizInfo, len(hits.Hits.Hits))
+	for i, source := range hits.Hits.Hits {
+		quizzes[i] = source.Source
+	}
+	return quizzes, nil
 }

@@ -100,7 +100,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			quiz.POST("", quizHandlers.CreateQuiz, AuthMiddleware)
 			quiz.POST("/:id/image", quizHandlers.UploadImage, AuthMiddleware)
 			quiz.GET("", quizHandlers.GetAllQuizzes)
-			// quiz.GET("/search", quizHandlers.SearchByTitle)
+			quiz.GET("/search", quizHandlers.SearchByTitle)
 			quiz.GET("/:id", quizHandlers.GetQuiz)
 			quiz.PUT("/:id", quizHandlers.UpdateQuiz, AuthMiddleware)
 			quiz.POST("/:id/start", resultHandlers.NewResult, AuthMiddleware)

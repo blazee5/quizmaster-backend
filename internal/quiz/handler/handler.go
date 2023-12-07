@@ -81,9 +81,21 @@ func (h *Handler) GetQuiz(c echo.Context) error {
 	return c.JSON(http.StatusOK, quiz)
 }
 
-//func (h *Handler) SearchByTitle(c echo.Context) error {
-//	title := c.QueryParam("title")
-//}
+func (h *Handler) SearchByTitle(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "quiz.SearchByTitle")
+	defer span.End()
+
+	title := c.QueryParam("title")
+
+	quizzes, err := h.service.Search(ctx, title)
+
+	if err != nil {
+		h.log.Infof("error while search quiz: %v", err)
+		return err
+	}
+
+	return c.JSON(http.StatusOK, quizzes)
+}
 
 func (h *Handler) CreateQuiz(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "quiz.CreateQuiz")

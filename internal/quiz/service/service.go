@@ -83,7 +83,13 @@ func (s *Service) Create(ctx context.Context, userID int, input domain.Quiz) (in
 		return 0, err
 	}
 
-	if err := s.elasticRepo.CreateIndex(ctx, input); err != nil {
+	quiz := models.Quiz{
+		ID:          id,
+		Title:       input.Title,
+		Description: input.Description,
+	}
+
+	if err := s.elasticRepo.CreateIndex(ctx, quiz); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -149,6 +155,16 @@ func (s *Service) Delete(ctx context.Context, userID, quizID int) error {
 	}
 
 	return nil
+}
+
+func (s *Service) Search(ctx context.Context, title string) ([]models.QuizInfo, error) {
+	quizzes, err := s.elasticRepo.SearchIndex(ctx, title)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return quizzes, nil
 }
 
 func (s *Service) UploadImage(ctx context.Context, userID, quizID int, filename string) error {
