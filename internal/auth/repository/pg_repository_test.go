@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
+	"github.com/blazee5/quizmaster-backend/lib/tracer"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -19,7 +20,7 @@ func TestAuthRepo_CreateUser(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	defer sqlxDB.Close()
 
-	authRepo := NewRepository(sqlxDB)
+	authRepo := NewRepository(sqlxDB, tracer.InitTracer("main", "test"))
 
 	t.Run("CreateUser", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id"}).AddRow(
@@ -52,7 +53,7 @@ func TestAuthRepo_ValidateUser(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	defer sqlxDB.Close()
 
-	authRepo := NewRepository(sqlxDB)
+	authRepo := NewRepository(sqlxDB, tracer.InitTracer("main", "test"))
 
 	t.Run("ValidateUser", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "avatar"}).AddRow(
