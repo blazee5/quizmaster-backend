@@ -50,7 +50,7 @@ import (
 
 const (
 	certFile       = "ssl/server.crt"
-	keyFile        = "ssl/server.pem"
+	keyFile        = "ssl/server.key"
 	maxHeaderBytes = 1 << 20
 	ctxTimeout     = 5
 	envProd        = "prod"
