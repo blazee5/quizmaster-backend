@@ -9,6 +9,8 @@ ExecStart=/home/blaze/apps/quizmaster-backend/quizmaster-backend --config=/home/
 Restart=always
 RestartSec=4
 StandardOutput=inherit
+AmbientCapabilities = CAP_NET_BIND_SERVICE
+CapabilityBoundingSet = CAP_NET_BIND_SERVICE
 
 [Install]
 WantedBy=multi-user.target
