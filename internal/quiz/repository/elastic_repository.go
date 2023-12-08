@@ -8,14 +8,16 @@ import (
 	"fmt"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/elastic/go-elasticsearch/v8"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ElasticRepository struct {
 	client *elasticsearch.Client
+	tracer trace.Tracer
 }
 
-func NewElasticRepository(client *elasticsearch.Client) *ElasticRepository {
-	return &ElasticRepository{client: client}
+func NewElasticRepository(client *elasticsearch.Client, tracer trace.Tracer) *ElasticRepository {
+	return &ElasticRepository{client: client, tracer: tracer}
 }
 
 func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.Quiz) error {
@@ -47,6 +49,9 @@ var (
 )
 
 func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([]models.QuizInfo, error) {
+	ctx, span := repo.tracer.Start(ctx, "quizElasticRepo.SearchIndex")
+	defer span.End()
+
 	query := map[string]any{
 		"query": map[string]any{
 			"multi_match": map[string]any{

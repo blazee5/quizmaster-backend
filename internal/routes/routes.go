@@ -81,7 +81,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 		quizRepos := quizRepo.NewRepository(s.db, s.tracer)
 		quizRedisRepo := quizRepo.NewQuizRedisRepo(s.rdb, s.tracer)
-		quizElasticRepo := quizRepo.NewElasticRepository(s.esClient)
+		quizElasticRepo := quizRepo.NewElasticRepository(s.esClient, s.tracer)
 		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo, s.tracer)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices, s.tracer)
 

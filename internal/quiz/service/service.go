@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
-	"github.com/blazee5/quizmaster-backend/internal/quiz"
+	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/internal/user"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"go.opentelemetry.io/otel/codes"
@@ -15,14 +15,14 @@ import (
 
 type Service struct {
 	log           *zap.SugaredLogger
-	repo          quiz.Repository
-	quizRedisRepo quiz.RedisRepository
+	repo          quizRepo.Repository
+	quizRedisRepo quizRepo.RedisRepository
 	userRedisRepo user.RedisRepository
-	elasticRepo   quiz.ElasticRepository
+	elasticRepo   quizRepo.ElasticRepository
 	tracer        trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo quiz.Repository, quizRedisRepo quiz.RedisRepository, userRedisRepo user.RedisRepository, elasticRepo quiz.ElasticRepository, tracer trace.Tracer) *Service {
+func NewService(log *zap.SugaredLogger, repo quizRepo.Repository, quizRedisRepo quizRepo.RedisRepository, userRedisRepo user.RedisRepository, elasticRepo quizRepo.ElasticRepository, tracer trace.Tracer) *Service {
 	return &Service{log: log, repo: repo, quizRedisRepo: quizRedisRepo, userRedisRepo: userRedisRepo, elasticRepo: elasticRepo, tracer: tracer}
 }
 
@@ -158,6 +158,9 @@ func (s *Service) Delete(ctx context.Context, userID, quizID int) error {
 }
 
 func (s *Service) Search(ctx context.Context, title string) ([]models.QuizInfo, error) {
+	ctx, span := s.tracer.Start(ctx, "quizService.SearchByTitle")
+	defer span.End()
+
 	quizzes, err := s.elasticRepo.SearchIndex(ctx, title)
 
 	if err != nil {
