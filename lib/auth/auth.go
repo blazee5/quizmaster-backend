@@ -65,5 +65,6 @@ func GenerateNewTokenCookie(token string) *http.Cookie {
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
 	}
 }
