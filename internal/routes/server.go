@@ -45,8 +45,6 @@ import (
 )
 
 const (
-	certFile       = "ssl/server.crt"
-	keyFile        = "ssl/server.key"
 	maxHeaderBytes = 1 << 20
 	ctxTimeout     = 5
 	envProd        = "prod"
@@ -77,7 +75,7 @@ func (s *Server) Run() error {
 			s.echo.Server.ReadTimeout = time.Second * 10
 			s.echo.Server.WriteTimeout = time.Second * 10
 			s.echo.Server.MaxHeaderBytes = maxHeaderBytes
-			if err := s.echo.StartTLS(":443", certFile, keyFile); err != nil {
+			if err := s.echo.StartAutoTLS(":443"); err != nil {
 				s.log.Fatalf("Error starting TLS Server: %v", err)
 			}
 		}()
