@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"crypto/tls"
 	adminAuthHandler "github.com/blazee5/quizmaster-backend/internal/admin/auth/handler"
 	adminAuthRepo "github.com/blazee5/quizmaster-backend/internal/admin/auth/repository"
 	adminAuthService "github.com/blazee5/quizmaster-backend/internal/admin/auth/service"
@@ -39,9 +38,6 @@ import (
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/acme"
-	"golang.org/x/crypto/acme/autocert"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -76,29 +72,18 @@ func (s *Server) Run() error {
 	if os.Getenv("ENV") == envProd {
 		s.echo.Pre(middleware.HTTPSWWWRedirect())
 
-		autoTLSManager := autocert.Manager{
-			Prompt: autocert.AcceptTOS,
-			Cache:  autocert.DirCache("/var/www/.cache"),
-		}
-
-		server := http.Server{
-			Addr:           ":443",
-			Handler:        s.echo,
-			MaxHeaderBytes: maxHeaderBytes,
-			TLSConfig: &tls.Config{
-				GetCertificate: autoTLSManager.GetCertificate,
-				NextProtos:     []string{acme.ALPNProto},
-			},
-		}
-
 		go func() {
-			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil {
+			s.log.Info("Server is listening on port 443")
+			s.echo.Server.ReadTimeout = time.Second * 10
+			s.echo.Server.WriteTimeout = time.Second * 10
+			s.echo.Server.MaxHeaderBytes = maxHeaderBytes
+			if err := s.echo.StartTLS(":443", certFile, keyFile); err != nil {
 				s.log.Fatalf("Error starting TLS Server: %v", err)
 			}
 		}()
 
 		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 
 		<-quit
 
