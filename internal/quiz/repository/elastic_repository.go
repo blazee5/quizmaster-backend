@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/elastic/go-elasticsearch/v8"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -21,9 +21,15 @@ func NewElasticRepository(client *elasticsearch.Client, tracer trace.Tracer) *El
 }
 
 func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.Quiz) error {
+	ctx, span := repo.tracer.Start(ctx, "quizElasticRepo.CreateIndex")
+	defer span.End()
+
 	data, err := json.Marshal(input)
 	if err != nil {
-		return fmt.Errorf("failed to marshal quiz: %w", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
 	}
 
 	resp, err := repo.client.Index(
@@ -33,12 +39,18 @@ func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.Qui
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to index quiz: %w", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.IsError() {
-		return fmt.Errorf("error indexing quiz: %v", resp.String())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
 	}
 
 	return nil
@@ -64,6 +76,9 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 
 	dataBytes, err := json.Marshal(&query)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
@@ -74,11 +89,17 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 	)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 	defer response.Body.Close()
 
 	if response.IsError() {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
@@ -94,7 +115,10 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 	}
 
 	var hits EsHits
-	if err := json.NewDecoder(response.Body).Decode(&hits); err != nil {
+	if err = json.NewDecoder(response.Body).Decode(&hits); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
