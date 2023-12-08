@@ -2,6 +2,7 @@ package routes
 
 import (
 	"context"
+	"crypto/tls"
 	adminAuthHandler "github.com/blazee5/quizmaster-backend/internal/admin/auth/handler"
 	adminAuthRepo "github.com/blazee5/quizmaster-backend/internal/admin/auth/repository"
 	adminAuthService "github.com/blazee5/quizmaster-backend/internal/admin/auth/service"
@@ -33,13 +34,30 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/redis/go-redis/v9"
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/acme"
+	"golang.org/x/crypto/acme/autocert"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+const (
+	certFile       = "ssl/server.crt"
+	keyFile        = "ssl/server.pem"
+	maxHeaderBytes = 1 << 20
+	ctxTimeout     = 5
+	envProd        = "prod"
 )
 
 type Server struct {
+	echo     *echo.Echo
 	log      *zap.SugaredLogger
 	db       *sqlx.DB
 	rdb      *redis.Client
@@ -48,8 +66,65 @@ type Server struct {
 	tracer   trace.Tracer
 }
 
-func NewServer(log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer) *Server {
-	return &Server{log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer}
+func NewServer(echo *echo.Echo, log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer) *Server {
+	return &Server{echo: echo, log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer}
+}
+
+func (s *Server) Run() error {
+	s.InitRoutes(s.echo)
+
+	if os.Getenv("ENV") == envProd {
+		s.echo.Pre(middleware.HTTPSWWWRedirect())
+
+		autoTLSManager := autocert.Manager{
+			Prompt: autocert.AcceptTOS,
+			Cache:  autocert.DirCache("/var/www/.cache"),
+		}
+
+		server := http.Server{
+			Addr:           ":443",
+			Handler:        s.echo,
+			MaxHeaderBytes: maxHeaderBytes,
+			TLSConfig: &tls.Config{
+				GetCertificate: autoTLSManager.GetCertificate,
+				NextProtos:     []string{acme.ALPNProto},
+			},
+		}
+
+		go func() {
+			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil {
+				s.log.Fatalf("Error starting TLS Server: %v", err)
+			}
+		}()
+
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+		<-quit
+
+		ctx, shutdown := context.WithTimeout(context.Background(), ctxTimeout*time.Second)
+		defer shutdown()
+
+		s.log.Info("Server exiting...")
+		return s.echo.Server.Shutdown(ctx)
+	}
+
+	go func() {
+		if err := s.echo.Start(os.Getenv("PORT")); err != nil {
+			s.log.Infof("Error Starting server %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+
+	ctx, shutdown := context.WithTimeout(context.Background(), ctxTimeout*time.Second)
+	defer shutdown()
+
+	s.log.Info("Server exiting...")
+	return s.echo.Server.Shutdown(ctx)
 }
 
 func (s *Server) InitRoutes(e *echo.Echo) {

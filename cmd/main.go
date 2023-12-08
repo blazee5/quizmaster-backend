@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/blazee5/quizmaster-backend/internal/routes"
 	"github.com/blazee5/quizmaster-backend/lib/db/postgres"
 	"github.com/blazee5/quizmaster-backend/lib/db/redis"
@@ -26,18 +25,10 @@ import (
 // @title QuizMaster Backend API
 // @version 1.0
 // @description This is a QuizMaster backend docs.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
+// @contact.name blaze
+// @contact.url https://www.github.com/blazee5
 // @host localhost:3000
 // @BasePath /
-
 // @securitydefinitions.apikey ApiKeyAuth
 // @in cookie
 // @name token
@@ -65,11 +56,10 @@ func main() {
 	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
-	server := routes.NewServer(log, db, rdb, esClient, ws, trace)
-	server.InitRoutes(e)
+	server := routes.NewServer(e, log, db, rdb, esClient, ws, trace)
 
 	go func() {
-		log.Fatal(e.Start(os.Getenv("PORT")))
+		log.Fatal(server.Run())
 	}()
 
 	go func() {
@@ -79,10 +69,6 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
-
-	if err := e.Shutdown(context.Background()); err != nil {
-		log.Infof("Error occured on server shutting down: %v", err)
-	}
 
 	if err := db.Close(); err != nil {
 		log.Infof("Error occured on db connection close: %v", err)
