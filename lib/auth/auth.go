@@ -63,7 +63,7 @@ func GenerateNewTokenCookie(token string) *http.Cookie {
 		Value:    token,
 		Expires:  time.Now().Add(72 * time.Hour),
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	}
