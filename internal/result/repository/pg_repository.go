@@ -42,8 +42,15 @@ func (repo *Repository) GetByID(ctx context.Context, id int) (models.Result, err
 func (repo *Repository) GetByQuizID(ctx context.Context, quizID int) ([]models.UsersResult, error) {
 	var results []models.UsersResult
 
-	err := repo.db.SelectContext(ctx, &results, `SELECT r.id, r.score, r.created_at, u.username
-		FROM results r JOIN users u ON u.id = r.user_id WHERE r.quiz_id = $1 AND is_completed = true`, quizID)
+	err := repo.db.SelectContext(ctx, &results, `SELECT r.id, r.score, r.created_at, u.username FROM results r
+	INNER JOIN (
+    	SELECT user_id, MAX(score) AS best_score
+    	FROM results
+    	WHERE quiz_id = $1 AND is_completed = true
+    	GROUP BY user_id
+    ) AS best_results ON best_results.user_id = r.user_id AND best_results.best_score = r.score
+		JOIN users u ON u.id = r.user_id
+		ORDER BY r.score DESC`, quizID)
 
 	if err != nil {
 		return nil, err
