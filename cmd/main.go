@@ -44,10 +44,10 @@ func main() {
 	rdb := redis.NewRedisClient()
 	esClient := elastic.NewElasticSearchClient(log)
 	ws := socketio.NewServer(nil)
-	trace := tracer.InitTracer(os.Getenv("JAEGER_HOST"), "Quizmaster")
+	trace := tracer.InitTracer("Quizmaster")
 
 	e := echo.New()
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:3001"},

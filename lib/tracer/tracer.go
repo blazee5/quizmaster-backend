@@ -1,8 +1,9 @@
 package tracer
 
 import (
+	"context"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
@@ -10,8 +11,8 @@ import (
 	"log"
 )
 
-func NewJaegerExporter(url string) (tracesdk.SpanExporter, error) {
-	return jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+func NewJaegerExporter() (tracesdk.SpanExporter, error) {
+	return otlptracegrpc.New(context.Background(), otlptracegrpc.WithInsecure())
 }
 
 func NewTraceProvider(exp tracesdk.SpanExporter, ServiceName string) (*tracesdk.TracerProvider, error) {
@@ -32,8 +33,8 @@ func NewTraceProvider(exp tracesdk.SpanExporter, ServiceName string) (*tracesdk.
 	), nil
 }
 
-func InitTracer(jaegerURL string, serviceName string) trace.Tracer {
-	exporter, err := NewJaegerExporter(jaegerURL)
+func InitTracer(serviceName string) trace.Tracer {
+	exporter, err := NewJaegerExporter()
 	if err != nil {
 		log.Fatalf("initialize tracer exporter: %v", err)
 	}
