@@ -6,6 +6,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -27,6 +28,9 @@ func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
 	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes")
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
@@ -43,6 +47,9 @@ func (repo *Repository) Create(ctx context.Context, userID int, input domain.Qui
 		input.Title, input.Description, userID).Scan(&quizID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return 0, err
 	}
 
@@ -58,6 +65,9 @@ func (repo *Repository) GetByID(ctx context.Context, id int) (models.Quiz, error
 	err := repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", id).StructScan(&quiz)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.Quiz{}, err
 	}
 
@@ -74,6 +84,9 @@ func (repo *Repository) Update(ctx context.Context, quizID int, input domain.Qui
 		input.Title, input.Description, quizID).Err()
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -87,12 +100,18 @@ func (repo *Repository) Delete(ctx context.Context, id int) error {
 	res, err := repo.db.ExecContext(ctx, "DELETE FROM quizzes WHERE id = $1", id)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
 	rows, err := res.RowsAffected()
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -110,6 +129,9 @@ func (repo *Repository) UploadImage(ctx context.Context, id int, filename string
 	err := repo.db.QueryRowxContext(ctx, "UPDATE quizzes SET image = $1 WHERE id = $2", filename, id).Err()
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -123,6 +145,9 @@ func (repo *Repository) DeleteImage(ctx context.Context, id int) error {
 	err := repo.db.QueryRowxContext(ctx, "UPDATE quizzes SET image = '' WHERE id = $1", id).Err()
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 

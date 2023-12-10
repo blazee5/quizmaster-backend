@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	socketio "github.com/vchitai/go-socket.io/v4"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -20,13 +21,17 @@ type Handler struct {
 	log     *zap.SugaredLogger
 	service result.Service
 	ws      *socketio.Server
+	tracer  trace.Tracer
 }
 
-func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socketio.Server) *Handler {
-	return &Handler{log: log, service: service, ws: ws}
+func NewHandler(log *zap.SugaredLogger, service result.Service, ws *socketio.Server, tracer trace.Tracer) *Handler {
+	return &Handler{log: log, service: service, ws: ws, tracer: tracer}
 }
 
 func (h *Handler) NewResult(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "result.NewResult")
+	defer span.End()
+
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
 
@@ -36,7 +41,7 @@ func (h *Handler) NewResult(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.NewResult(c.Request().Context(), userID, quizID)
+	id, err := h.service.NewResult(ctx, userID, quizID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -57,6 +62,9 @@ func (h *Handler) NewResult(c echo.Context) error {
 }
 
 func (h *Handler) SaveResult(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "result.SaveResult")
+	defer span.End()
+
 	var input domain.UserAnswer
 
 	userID := c.Get("userID").(int)
@@ -82,7 +90,7 @@ func (h *Handler) SaveResult(c echo.Context) error {
 		})
 	}
 
-	err = h.service.SaveUserAnswer(c.Request().Context(), userID, quizID, input)
+	err = h.service.SaveUserAnswer(ctx, userID, quizID, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -107,6 +115,9 @@ func (h *Handler) SaveResult(c echo.Context) error {
 }
 
 func (h *Handler) SubmitResult(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "result.SubmitResult")
+	defer span.End()
+
 	var input domain.SubmitResult
 
 	userID := c.Get("userID").(int)
@@ -132,7 +143,7 @@ func (h *Handler) SubmitResult(c echo.Context) error {
 		})
 	}
 
-	result, err := h.service.SubmitResult(c.Request().Context(), userID, quizID, input)
+	result, err := h.service.SubmitResult(ctx, userID, quizID, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -159,9 +170,12 @@ func (h *Handler) SubmitResult(c echo.Context) error {
 }
 
 func (h *Handler) UpdateResults(quizID int) interface{} {
+	ctx, span := h.tracer.Start(context.Background(), "result.UpdateResults")
+	defer span.End()
+
 	id := strconv.Itoa(quizID)
 
-	results, err := h.service.GetResultsByQuizID(context.Background(), quizID)
+	results, err := h.service.GetResultsByQuizID(ctx, quizID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return "quiz not found"

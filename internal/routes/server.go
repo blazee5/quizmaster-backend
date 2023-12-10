@@ -146,10 +146,10 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		questionRepos := questionRepo.NewRepository(s.db, s.tracer)
 		answerRepos := answerRepo.NewRepository(s.db, s.tracer)
 
-		resultRepos := resultRepo.NewRepository(s.db)
-		resultServices := resultService.NewService(s.log, resultRepos, quizRepos, questionRepos, answerRepos)
-		resultHandlers := resultHandler.NewHandler(s.log, resultServices, s.ws)
-		resultSocketHandlers := ws.NewHandler(s.log, resultServices, s.ws)
+		resultRepos := resultRepo.NewRepository(s.db, s.tracer)
+		resultServices := resultService.NewService(s.log, resultRepos, quizRepos, questionRepos, answerRepos, s.tracer)
+		resultHandlers := resultHandler.NewHandler(s.log, resultServices, s.ws, s.tracer)
+		resultSocketHandlers := ws.NewHandler(s.log, resultServices, s.ws, s.tracer)
 
 		s.ws.OnEvent("/results", "message", resultSocketHandlers.GetResults)
 

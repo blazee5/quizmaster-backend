@@ -9,6 +9,8 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/internal/result"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"strings"
 )
@@ -19,13 +21,17 @@ type Service struct {
 	quizRepo     quiz.Repository
 	questionRepo question.Repository
 	answerRepo   answer.Repository
+	tracer       trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo result.Repository, quizRepo quiz.Repository, questionRepo question.Repository, answerRepo answer.Repository) *Service {
-	return &Service{log: log, repo: repo, quizRepo: quizRepo, questionRepo: questionRepo, answerRepo: answerRepo}
+func NewService(log *zap.SugaredLogger, repo result.Repository, quizRepo quiz.Repository, questionRepo question.Repository, answerRepo answer.Repository, tracer trace.Tracer) *Service {
+	return &Service{log: log, repo: repo, quizRepo: quizRepo, questionRepo: questionRepo, answerRepo: answerRepo, tracer: tracer}
 }
 
 func (s *Service) NewResult(ctx context.Context, userID int, quizID int) (int, error) {
+	ctx, span := s.tracer.Start(ctx, "resultService.NewResult")
+	defer span.End()
+
 	_, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
@@ -36,13 +42,22 @@ func (s *Service) NewResult(ctx context.Context, userID int, quizID int) (int, e
 }
 
 func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input domain.UserAnswer) error {
+	ctx, span := s.tracer.Start(ctx, "resultService.SaveUserAnswer")
+	defer span.End()
+
 	if _, err := s.quizRepo.GetByID(ctx, quizID); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
 	attempt, err := s.repo.GetByID(ctx, input.AttemptID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -53,6 +68,9 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	question, err := s.questionRepo.GetQuestionByID(ctx, input.QuestionID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -63,6 +81,9 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	answerExists, err := s.repo.GetUserAnswerByID(ctx, input.AnswerID, input.AttemptID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -71,6 +92,9 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	}
 
 	if err := s.repo.SaveUserAnswer(ctx, userID, input.QuestionID, input.AnswerID, input.AttemptID, input.AnswerText); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -78,12 +102,21 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 		err := s.ProcessChoiceAnswer(ctx, question.ID, userID, input)
 
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return err
 		}
 	} else {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		err := s.ProcessInputAnswer(ctx, question.ID, userID, input)
 
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return err
 		}
 	}
@@ -92,9 +125,15 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 }
 
 func (s *Service) ProcessChoiceAnswer(ctx context.Context, questionID, userID int, input domain.UserAnswer) error {
+	ctx, span := s.tracer.Start(ctx, "resultService.ProcessChoiceAnswer")
+	defer span.End()
+
 	answer, err := s.answerRepo.GetByID(ctx, input.AnswerID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -106,6 +145,9 @@ func (s *Service) ProcessChoiceAnswer(ctx context.Context, questionID, userID in
 		err := s.repo.UpdateResult(ctx, input.AttemptID, userID, 1)
 
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return err
 		}
 	}
@@ -114,9 +156,15 @@ func (s *Service) ProcessChoiceAnswer(ctx context.Context, questionID, userID in
 }
 
 func (s *Service) ProcessInputAnswer(ctx context.Context, questionID, userID int, input domain.UserAnswer) error {
+	ctx, span := s.tracer.Start(ctx, "resultService.ProcessInputAnswer")
+	defer span.End()
+
 	correctAnswers, err := s.answerRepo.GetAnswersByQuestionID(ctx, questionID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -125,6 +173,9 @@ func (s *Service) ProcessInputAnswer(ctx context.Context, questionID, userID int
 			err := s.repo.UpdateResult(ctx, input.AttemptID, userID, 1)
 
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+
 				return err
 			}
 
@@ -136,11 +187,20 @@ func (s *Service) ProcessInputAnswer(ctx context.Context, questionID, userID int
 }
 
 func (s *Service) GetResultsByQuizID(ctx context.Context, quizID int) ([]models.UsersResult, error) {
+	ctx, span := s.tracer.Start(ctx, "resultService.GetResultsByQuizID")
+	defer span.End()
+
 	return s.repo.GetByQuizID(ctx, quizID)
 }
 
 func (s *Service) SubmitResult(ctx context.Context, userID, quizID int, input domain.SubmitResult) (models.UsersResult, error) {
+	ctx, span := s.tracer.Start(ctx, "resultService.SubmitResult")
+	defer span.End()
+
 	if _, err := s.quizRepo.GetByID(ctx, quizID); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.UsersResult{}, err
 	}
 
