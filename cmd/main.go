@@ -50,7 +50,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3001"},
+		AllowOrigins:     []string{"http://localhost:3000", "https://quizer-opal.vercel.app"},
 		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 		AllowCredentials: true,
 	}))
