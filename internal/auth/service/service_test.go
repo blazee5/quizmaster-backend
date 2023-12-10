@@ -29,7 +29,7 @@ func TestSignUp(t *testing.T) {
 
 	log := logger.NewLogger()
 	mockAuthRepo := mock_auth.NewMockRepository(ctrl)
-	authService := NewService(log, mockAuthRepo, tracer.InitTracer("main", "test"))
+	authService := NewService(log, mockAuthRepo, tracer.InitTracer("main"))
 
 	mockAuthRepo.EXPECT().CreateUser(gomock.Any(), gomock.Eq(domain.SignUpRequest{
 		Username: "username",
@@ -59,7 +59,7 @@ func TestSignIn(t *testing.T) {
 	log := logger.NewLogger()
 
 	mockAuthRepo := mock_auth.NewMockRepository(ctrl)
-	authService := NewService(log, mockAuthRepo, tracer.InitTracer("main", "test"))
+	authService := NewService(log, mockAuthRepo, tracer.InitTracer("main"))
 
 	mockAuthRepo.EXPECT().ValidateUser(gomock.Any(), gomock.Eq(domain.SignInRequest{
 		Email:    "email@gmail.com",
