@@ -20,7 +20,7 @@ func TestAuthRepo_CreateUser(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	defer sqlxDB.Close()
 
-	authRepo := NewRepository(sqlxDB, tracer.InitTracer("main", "test"))
+	authRepo := NewRepository(sqlxDB, tracer.InitTracer("main"))
 
 	t.Run("CreateUser", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id"}).AddRow(
@@ -53,7 +53,7 @@ func TestAuthRepo_ValidateUser(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	defer sqlxDB.Close()
 
-	authRepo := NewRepository(sqlxDB, tracer.InitTracer("main", "test"))
+	authRepo := NewRepository(sqlxDB, tracer.InitTracer("main"))
 
 	t.Run("ValidateUser", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "avatar"}).AddRow(
