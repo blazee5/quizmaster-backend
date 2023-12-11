@@ -75,7 +75,7 @@ func (s *Server) Run() error {
 			s.echo.Server.ReadTimeout = time.Second * 10
 			s.echo.Server.WriteTimeout = time.Second * 10
 			s.echo.Server.MaxHeaderBytes = maxHeaderBytes
-			if err := s.echo.StartAutoTLS(":443"); err != nil {
+			if err := s.echo.StartTLS(":443", "/etc/ssl/certs/ssl-cert-snakeoil.pem", "/etc/ssl/private/ssl-cert-snakeoil.key"); err != nil {
 				s.log.Fatalf("Error starting TLS Server: %v", err)
 			}
 		}()
