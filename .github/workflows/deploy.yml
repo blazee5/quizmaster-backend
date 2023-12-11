@@ -13,7 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      HOST: blaze@172.160.241.35
+      HOST: blaze@172.160.240.147
       DEPLOY_DIRECTORY: /home/blaze/apps/quizmaster-backend
       CONFIG_PATH: /home/blaze/apps/quizmaster-backend/cmd/.env_example
 
