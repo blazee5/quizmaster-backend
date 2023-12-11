@@ -48,6 +48,8 @@ const (
 	maxHeaderBytes = 1 << 20
 	ctxTimeout     = 5
 	envProd        = "prod"
+	certFile       = "/etc/letsencrypt/live/quizmaster.swedencentral.cloudapp.azure.com/fullchain.pem"
+	keyFile        = "/etc/letsencrypt/live/quizmaster.swedencentral.cloudapp.azure.com/privkey.pem"
 )
 
 type Server struct {
@@ -75,7 +77,7 @@ func (s *Server) Run() error {
 			s.echo.Server.ReadTimeout = time.Second * 10
 			s.echo.Server.WriteTimeout = time.Second * 10
 			s.echo.Server.MaxHeaderBytes = maxHeaderBytes
-			if err := s.echo.StartTLS(":443", "/etc/ssl/certs/ssl-cert-snakeoil.pem", "/etc/ssl/private/ssl-cert-snakeoil.key"); err != nil {
+			if err := s.echo.StartTLS(":443", certFile, keyFile); err != nil {
 				s.log.Fatalf("Error starting TLS Server: %v", err)
 			}
 		}()
