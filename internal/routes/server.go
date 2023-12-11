@@ -33,7 +33,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/redis/go-redis/v9"
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -70,8 +69,6 @@ func (s *Server) Run() error {
 	s.InitRoutes(s.echo)
 
 	if os.Getenv("ENV") == envProd {
-		s.echo.Pre(middleware.HTTPSWWWRedirect())
-
 		go func() {
 			s.log.Info("Server is listening on port 443")
 			s.echo.Server.ReadTimeout = time.Second * 10
