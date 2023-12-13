@@ -60,7 +60,7 @@ func (repo *Repository) GetByQuizID(ctx context.Context, quizID int) ([]models.U
 
 	var results []models.UsersResult
 
-	err := repo.db.SelectContext(ctx, &results, `SELECT r.id, r.score, r.created_at, u.username FROM results r
+	err := repo.db.SelectContext(ctx, &results, `SELECT u.id AS user_id, u.avatar, r.id, r.score, r.created_at, u.username FROM results r
 	INNER JOIN (
     	SELECT user_id, MAX(score) AS best_score
     	FROM results

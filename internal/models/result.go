@@ -13,7 +13,9 @@ type Result struct {
 
 type UsersResult struct {
 	ID        int       `json:"id" db:"id"`
-	Username  string    `json:"username,omitempty" db:"username"`
+	UserID    int       `json:"user_id" db:"user_id"`
+	Username  string    `json:"username" db:"username"`
+	Avatar    string    `json:"avatar" db:"avatar"`
 	Score     int       `json:"score" db:"score"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
