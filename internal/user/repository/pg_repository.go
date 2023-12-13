@@ -37,20 +37,24 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 	userResults := make([]models.UserResult, 0)
 	processedQuizzes := make([]int, 0)
 
-	query := `SELECT q.id AS quiz_id, q.title, q.description, q.image, q.user_id, q.created_at, r.score, r.is_completed, r.created_at
-			  FROM results r
-		      INNER JOIN quizzes q ON r.quiz_id = q.id 
-		      WHERE r.user_id = $1 
-			  ORDER BY r.score DESC`
+	query := `SELECT q.id, q.title, q.description, q.image, q.user_id, q.created_at, r.score,
+       (SELECT COUNT(*) FROM questions WHERE questions.quiz_id = q.id) AS questions_count, r.created_at
+		FROM results r
+		INNER JOIN quizzes q ON r.quiz_id = q.id
+		WHERE r.user_id = $1 AND r.is_completed = true
+		GROUP BY q.id, r.score, r.is_completed, r.created_at
+		ORDER BY r.score DESC`
 
 	if err != nil {
 		return models.UserInfo{}, err
 	}
 
 	rows, err := repo.db.QueryxContext(ctx, query, userID)
+
 	if err != nil {
 		return models.UserInfo{}, err
 	}
+
 	defer rows.Close()
 
 	for rows.Next() {
@@ -65,7 +69,7 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 			&quiz.UserID,
 			&quiz.CreatedAt,
 			&userResult.Score,
-			&userResult.IsCompleted,
+			&userResult.QuestionsCount,
 			&userResult.CreatedAt,
 		)
 		if err != nil {

@@ -21,8 +21,8 @@ type UsersResult struct {
 }
 
 type UserResult struct {
-	Quiz        Quiz      `json:"quiz" db:"quiz"`
-	Score       int       `json:"score" db:"score"`
-	IsCompleted bool      `json:"is_completed" db:"is_completed"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	Quiz           Quiz      `json:"quiz" db:"quiz"`
+	Score          int       `json:"score" db:"score"`
+	QuestionsCount int       `json:"questions_count" db:"questions_count"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
 }
