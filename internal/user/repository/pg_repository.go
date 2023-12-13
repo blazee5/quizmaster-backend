@@ -34,7 +34,7 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 		return models.UserInfo{}, err
 	}
 
-	var userResults []models.UserResult
+	userResults := make([]models.UserResult, 0)
 	processedQuizzes := make([]int, 0)
 
 	query := `SELECT q.id AS quiz_id, q.title, q.description, q.image, q.user_id, q.created_at, r.score, r.is_completed, r.created_at
