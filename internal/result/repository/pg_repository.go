@@ -58,7 +58,7 @@ func (repo *Repository) GetByQuizID(ctx context.Context, quizID int) ([]models.U
 	ctx, span := repo.tracer.Start(ctx, "resultRepo.GetByQuizID")
 	defer span.End()
 
-	var results []models.UsersResult
+	results := make([]models.UsersResult, 0)
 
 	err := repo.db.SelectContext(ctx, &results, `
         SELECT DISTINCT ON (r.user_id)
