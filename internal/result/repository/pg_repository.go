@@ -60,20 +60,23 @@ func (repo *Repository) GetByQuizID(ctx context.Context, quizID int) ([]models.U
 
 	var results []models.UsersResult
 
-	err := repo.db.SelectContext(ctx, &results, `SELECT u.id AS user_id, u.avatar, r.id, r.score, r.created_at, u.username FROM results r
-	INNER JOIN (
-    	SELECT user_id, MAX(score) AS best_score
-    	FROM results
-    	WHERE quiz_id = $1 AND is_completed = true
-    	GROUP BY user_id
-    ) AS best_results ON best_results.user_id = r.user_id AND best_results.best_score = r.score
-		JOIN users u ON u.id = r.user_id
-		ORDER BY r.score DESC`, quizID)
+	err := repo.db.SelectContext(ctx, &results, `
+        SELECT DISTINCT ON (r.user_id)
+            u.id AS user_id,
+            u.avatar,
+            r.id,
+            r.score,
+            r.created_at,
+            u.username
+        FROM results r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.quiz_id = $1 AND r.is_completed = true
+        ORDER BY r.user_id, r.score DESC, r.created_at DESC, r.id DESC
+    `, quizID)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-
 		return nil, err
 	}
 
