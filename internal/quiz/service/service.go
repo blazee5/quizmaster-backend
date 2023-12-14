@@ -83,13 +83,13 @@ func (s *Service) Create(ctx context.Context, userID int, input domain.Quiz) (in
 		return 0, err
 	}
 
-	quiz := models.Quiz{
+	quiz := models.QuizInfo{
 		ID:          id,
 		Title:       input.Title,
 		Description: input.Description,
 	}
 
-	if err := s.elasticRepo.CreateIndex(ctx, quiz); err != nil {
+	if err = s.elasticRepo.CreateIndex(ctx, quiz); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -116,9 +116,14 @@ func (s *Service) Update(ctx context.Context, userID, quizID int, input domain.Q
 		return http_errors.PermissionDenied
 	}
 
-	err = s.repo.Update(ctx, quizID, input)
+	if err = s.repo.Update(ctx, quizID, input); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 
-	if err != nil {
+		return err
+	}
+
+	if err = s.elasticRepo.UpdateIndex(ctx, quizID, models.QuizInfo{ID: quizID, Title: input.Title, Description: input.Description}); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -146,6 +151,15 @@ func (s *Service) Delete(ctx context.Context, userID, quizID int) error {
 	}
 
 	err = s.repo.Delete(ctx, quizID)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	err = s.elasticRepo.DeleteIndex(ctx, quizID)
 
 	if err != nil {
 		span.RecordError(err)

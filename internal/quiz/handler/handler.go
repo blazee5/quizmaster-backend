@@ -232,7 +232,7 @@ func (h *Handler) DeleteQuiz(c echo.Context) error {
 		})
 	}
 
-	return c.String(http.StatusOK, "sucess")
+	return c.String(http.StatusOK, "success")
 }
 
 func (h *Handler) UploadImage(c echo.Context) error {

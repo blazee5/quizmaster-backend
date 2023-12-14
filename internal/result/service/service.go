@@ -108,9 +108,6 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 			return err
 		}
 	} else {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
 		err := s.ProcessInputAnswer(ctx, question.ID, userID, input)
 
 		if err != nil {

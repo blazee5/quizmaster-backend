@@ -6,8 +6,8 @@ import (
 )
 
 type ElasticRepository interface {
-	CreateIndex(ctx context.Context, input models.Quiz) error
-	//UpdateIndex(ctx context.Context, input domain.Quiz) error
-	//DeleteIndex(ctx context.Context, input domain.Quiz) error
+	CreateIndex(ctx context.Context, input models.QuizInfo) error
 	SearchIndex(ctx context.Context, input string) ([]models.QuizInfo, error)
+	UpdateIndex(ctx context.Context, id int, input models.QuizInfo) error
+	DeleteIndex(ctx context.Context, ID int) error
 }
