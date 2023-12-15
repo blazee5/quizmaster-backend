@@ -6,6 +6,8 @@ import (
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -14,13 +16,17 @@ import (
 type Handler struct {
 	log     *zap.SugaredLogger
 	service adminquiz.Service
+	tracer  trace.Tracer
 }
 
-func NewHandler(log *zap.SugaredLogger, service adminquiz.Service) *Handler {
-	return &Handler{log: log, service: service}
+func NewHandler(log *zap.SugaredLogger, service adminquiz.Service, tracer trace.Tracer) *Handler {
+	return &Handler{log: log, service: service, tracer: tracer}
 }
 
 func (h *Handler) CreateQuiz(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "admin.quiz.CreateQuiz")
+	defer span.End()
+
 	var input domain.Quiz
 	userID := c.Get("userID").(int)
 
@@ -38,9 +44,14 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 		})
 	}
 
-	id, err := h.service.CreateQuiz(c.Request().Context(), userID, input)
+	id, err := h.service.CreateQuiz(ctx, userID, input)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		h.log.Infof("error while admin create quiz: %v", err)
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -52,10 +63,17 @@ func (h *Handler) CreateQuiz(c echo.Context) error {
 }
 
 func (h *Handler) GetQuizzes(c echo.Context) error {
-	quizzes, err := h.service.GetQuizzes(c.Request().Context())
+	ctx, span := h.tracer.Start(c.Request().Context(), "admin.quiz.GetQuizzes")
+	defer span.End()
+
+	quizzes, err := h.service.GetQuizzes(ctx)
 
 	if err != nil {
-		h.log.Infof("error while update quiz: %v", err)
+		h.log.Infof("error while admin get quizzes: %v", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -65,6 +83,9 @@ func (h *Handler) GetQuizzes(c echo.Context) error {
 }
 
 func (h *Handler) UpdateQuiz(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "admin.quiz.UpdateQuiz")
+	defer span.End()
+
 	var input domain.Quiz
 
 	quizID, err := strconv.Atoi(c.Param("quizID"))
@@ -89,9 +110,14 @@ func (h *Handler) UpdateQuiz(c echo.Context) error {
 		})
 	}
 
-	err = h.service.UpdateQuiz(c.Request().Context(), quizID, input)
+	err = h.service.UpdateQuiz(ctx, quizID, input)
 
 	if err != nil {
+		h.log.Infof("error while admin update quiz")
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -101,6 +127,9 @@ func (h *Handler) UpdateQuiz(c echo.Context) error {
 }
 
 func (h *Handler) DeleteQuiz(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "admin.quiz.DeleteQuiz")
+	defer span.End()
+
 	quizID, err := strconv.Atoi(c.Param("quizID"))
 
 	if err != nil {
@@ -109,10 +138,14 @@ func (h *Handler) DeleteQuiz(c echo.Context) error {
 		})
 	}
 
-	err = h.service.DeleteQuiz(c.Request().Context(), quizID)
+	err = h.service.DeleteQuiz(ctx, quizID)
 
 	if err != nil {
-		h.log.Infof("error while delete quiz: %v", err)
+		h.log.Infof("error while admin delete quiz: %v", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})

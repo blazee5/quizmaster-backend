@@ -196,18 +196,18 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 	admin := e.Group("/admin")
 	{
-		adminAuthRepos := adminAuthRepo.NewRepository(s.db)
-		adminAuthServices := adminAuthService.NewService(s.log, adminAuthRepos)
-		adminAuthHandlers := adminAuthHandler.NewHandler(s.log, adminAuthServices)
+		adminAuthRepos := adminAuthRepo.NewRepository(s.db, s.tracer)
+		adminAuthServices := adminAuthService.NewService(s.log, adminAuthRepos, s.tracer)
+		adminAuthHandlers := adminAuthHandler.NewHandler(s.log, adminAuthServices, s.tracer)
 
 		auth := admin.Group("/auth")
 		{
 			auth.POST("/signin", adminAuthHandlers.SignInAdmin)
 		}
 
-		adminUserRepos := adminUserRepo.NewRepository(s.db)
-		adminUserServices := adminUserService.NewService(s.log, adminUserRepos)
-		adminUserHandlers := adminUserHandler.NewHandler(s.log, adminUserServices)
+		adminUserRepos := adminUserRepo.NewRepository(s.db, s.tracer)
+		adminUserServices := adminUserService.NewService(s.log, adminUserRepos, s.tracer)
+		adminUserHandlers := adminUserHandler.NewHandler(s.log, adminUserServices, s.tracer)
 
 		users := admin.Group("/users", AdminMiddleware)
 		{
@@ -217,9 +217,9 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			users.DELETE("/:userID", adminUserHandlers.DeleteUser)
 		}
 
-		adminQuizRepos := adminQuizRepo.NewRepository(s.db)
-		adminQuizServices := adminQuizService.NewService(s.log, adminQuizRepos)
-		adminQuizHandlers := adminQuizHandler.NewHandler(s.log, adminQuizServices)
+		adminQuizRepos := adminQuizRepo.NewRepository(s.db, s.tracer)
+		adminQuizServices := adminQuizService.NewService(s.log, adminQuizRepos, s.tracer)
+		adminQuizHandlers := adminQuizHandler.NewHandler(s.log, adminQuizServices, s.tracer)
 
 		quizzes := admin.Group("/quizzes", AdminMiddleware)
 		{
