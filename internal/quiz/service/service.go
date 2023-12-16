@@ -7,9 +7,14 @@ import (
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/internal/user"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"path/filepath"
 	"strconv"
 )
 
@@ -19,11 +24,12 @@ type Service struct {
 	quizRedisRepo quizRepo.RedisRepository
 	userRedisRepo user.RedisRepository
 	elasticRepo   quizRepo.ElasticRepository
+	awsRepo       quizRepo.AWSRepository
 	tracer        trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo quizRepo.Repository, quizRedisRepo quizRepo.RedisRepository, userRedisRepo user.RedisRepository, elasticRepo quizRepo.ElasticRepository, tracer trace.Tracer) *Service {
-	return &Service{log: log, repo: repo, quizRedisRepo: quizRedisRepo, userRedisRepo: userRedisRepo, elasticRepo: elasticRepo, tracer: tracer}
+func NewService(log *zap.SugaredLogger, repo quizRepo.Repository, quizRedisRepo quizRepo.RedisRepository, userRedisRepo user.RedisRepository, elasticRepo quizRepo.ElasticRepository, awsRepo quizRepo.AWSRepository, tracer trace.Tracer) *Service {
+	return &Service{log: log, repo: repo, quizRedisRepo: quizRedisRepo, userRedisRepo: userRedisRepo, elasticRepo: elasticRepo, awsRepo: awsRepo, tracer: tracer}
 }
 
 func (s *Service) GetAll(ctx context.Context) ([]models.Quiz, error) {
@@ -184,7 +190,7 @@ func (s *Service) Search(ctx context.Context, title string) ([]models.QuizInfo, 
 	return quizzes, nil
 }
 
-func (s *Service) UploadImage(ctx context.Context, userID, quizID int, filename string) error {
+func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeader *multipart.FileHeader) error {
 	ctx, span := s.tracer.Start(ctx, "quizService.UploadImage")
 	defer span.End()
 
@@ -201,7 +207,42 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, filename 
 		return http_errors.PermissionDenied
 	}
 
-	err = s.repo.UploadImage(ctx, quizID, filename)
+	file, err := fileHeader.Open()
+
+	if err != nil {
+		return err
+	}
+
+	bytes, err := io.ReadAll(file)
+
+	if err != nil {
+		return err
+	}
+
+	contentType := http.DetectContentType(bytes)
+
+	uuid, err := uuid.NewUUID()
+
+	if err != nil {
+		return err
+	}
+
+	fileName := quiz.Image
+
+	if fileName == "" {
+		fileName = uuid.String() + filepath.Ext(fileHeader.Filename)
+	}
+
+	err = s.awsRepo.SaveFile(ctx, fileName, contentType, bytes)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	err = s.repo.UploadImage(ctx, quizID, fileName)
 
 	if err != nil {
 		span.RecordError(err)
@@ -228,6 +269,15 @@ func (s *Service) DeleteImage(ctx context.Context, userID, quizID int) error {
 
 	if quiz.UserID != userID {
 		return http_errors.PermissionDenied
+	}
+
+	err = s.awsRepo.DeleteFile(ctx, quiz.Image)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
 	}
 
 	err = s.repo.DeleteImage(ctx, quizID)

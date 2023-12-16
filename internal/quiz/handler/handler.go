@@ -6,7 +6,6 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
-	"github.com/blazee5/quizmaster-backend/lib/http_utils"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -250,20 +249,13 @@ func (h *Handler) UploadImage(c echo.Context) error {
 
 	file, err := c.FormFile("image")
 
-	if err == nil {
-		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
-			h.log.Infof("error while save question image: %v", err)
-			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "server error",
-			})
-		}
-	} else {
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "image is required",
 		})
 	}
 
-	err = h.service.UploadImage(ctx, userID, quizID, file.Filename)
+	err = h.service.UploadImage(ctx, userID, quizID, file)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -302,16 +294,6 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "invalid quiz id",
 		})
-	}
-
-	file, err := c.FormFile("image")
-
-	if err == nil {
-		if err := http_utils.UploadFile(file, "public/"+file.Filename); err != nil {
-			return c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": "server error",
-			})
-		}
 	}
 
 	err = h.service.DeleteImage(ctx, userID, quizID)

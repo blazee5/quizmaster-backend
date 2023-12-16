@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/blazee5/quizmaster-backend/internal/routes"
+	"github.com/blazee5/quizmaster-backend/lib/db/aws"
 	"github.com/blazee5/quizmaster-backend/lib/db/postgres"
 	"github.com/blazee5/quizmaster-backend/lib/db/redis"
 	"github.com/blazee5/quizmaster-backend/lib/elastic"
@@ -45,6 +46,7 @@ func main() {
 	esClient := elastic.NewElasticSearchClient(log)
 	ws := socketio.NewServer(nil)
 	trace := tracer.InitTracer("Quizmaster")
+	awsClient := aws.NewAWSClient()
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -56,7 +58,7 @@ func main() {
 	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
-	server := routes.NewServer(e, log, db, rdb, esClient, ws, trace)
+	server := routes.NewServer(e, log, db, rdb, esClient, ws, trace, awsClient)
 
 	go func() {
 		log.Fatal(server.Run())

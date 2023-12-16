@@ -5,7 +5,12 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/blazee5/quizmaster-backend/internal/user"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"path/filepath"
 	"strconv"
 )
 
@@ -13,10 +18,11 @@ type Service struct {
 	log       *zap.SugaredLogger
 	repo      user.Repository
 	redisRepo user.RedisRepository
+	awsRepo   user.AWSRepository
 }
 
-func NewService(log *zap.SugaredLogger, repo user.Repository, redisRepo user.RedisRepository) *Service {
-	return &Service{log: log, repo: repo, redisRepo: redisRepo}
+func NewService(log *zap.SugaredLogger, repo user.Repository, redisRepo user.RedisRepository, awsRepo user.AWSRepository) *Service {
+	return &Service{log: log, repo: repo, redisRepo: redisRepo, awsRepo: awsRepo}
 }
 
 func (s *Service) GetByID(ctx context.Context, userID int) (models.UserInfo, error) {
@@ -51,8 +57,44 @@ func (s *Service) GetResults(ctx context.Context, userID int) ([]models.Quiz, er
 	return s.repo.GetResults(ctx, userID)
 }
 
-func (s *Service) ChangeAvatar(ctx context.Context, userID int, file string) error {
-	err := s.repo.ChangeAvatar(ctx, userID, file)
+func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *multipart.FileHeader) error {
+	avatar, err := s.repo.GetAvatarByID(ctx, userID)
+
+	if err != nil {
+		return err
+	}
+
+	file, err := fileHeader.Open()
+
+	if err != nil {
+		return err
+	}
+
+	bytes, err := io.ReadAll(file)
+
+	if err != nil {
+		return err
+	}
+
+	contentType := http.DetectContentType(bytes)
+
+	uuid, err := uuid.NewUUID()
+
+	if err != nil {
+		return err
+	}
+
+	if avatar == "" {
+		avatar = uuid.String() + filepath.Ext(fileHeader.Filename)
+	}
+
+	err = s.awsRepo.SaveFile(ctx, avatar, contentType, bytes)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.ChangeAvatar(ctx, userID, avatar)
 
 	if err != nil {
 		return err

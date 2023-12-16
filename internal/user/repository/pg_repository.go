@@ -138,7 +138,18 @@ func (repo *Repository) GetResults(ctx context.Context, userID int) ([]models.Qu
 	}
 
 	return quizzes, nil
+}
 
+func (repo *Repository) GetAvatarByID(ctx context.Context, userID int) (string, error) {
+	var avatar string
+
+	err := repo.db.QueryRowxContext(ctx, "SELECT avatar FROM users WHERE id = $1", userID).Scan(&avatar)
+
+	if err != nil {
+		return "", err
+	}
+
+	return avatar, nil
 }
 
 func (repo *Repository) ChangeAvatar(ctx context.Context, userID int, file string) error {

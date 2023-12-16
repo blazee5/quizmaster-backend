@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/user"
-	"github.com/blazee5/quizmaster-backend/lib/http_utils"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -134,11 +133,7 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 		})
 	}
 
-	if err := http_utils.UploadFile(file, "./public/"+file.Filename); err != nil {
-		return c.JSON(http.StatusInternalServerError, "error while upload avatar")
-	}
-
-	err = h.service.ChangeAvatar(c.Request().Context(), userID, file.Filename)
+	err = h.service.ChangeAvatar(c.Request().Context(), userID, file)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{

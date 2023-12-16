@@ -33,6 +33,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -52,17 +53,18 @@ const (
 )
 
 type Server struct {
-	echo     *echo.Echo
-	log      *zap.SugaredLogger
-	db       *sqlx.DB
-	rdb      *redis.Client
-	esClient *elasticsearch.Client
-	ws       *socketio.Server
-	tracer   trace.Tracer
+	echo      *echo.Echo
+	log       *zap.SugaredLogger
+	db        *sqlx.DB
+	rdb       *redis.Client
+	esClient  *elasticsearch.Client
+	ws        *socketio.Server
+	tracer    trace.Tracer
+	awsClient *minio.Client
 }
 
-func NewServer(echo *echo.Echo, log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer) *Server {
-	return &Server{echo: echo, log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer}
+func NewServer(echo *echo.Echo, log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer, awsClient *minio.Client) *Server {
+	return &Server{echo: echo, log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer, awsClient: awsClient}
 }
 
 func (s *Server) Run() error {
@@ -124,7 +126,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 	{
 		userRepos := userRepo.NewRepository(s.db)
 		userRedisRepo := userRepo.NewUserRedisRepo(s.rdb)
-		userServices := userService.NewService(s.log, userRepos, userRedisRepo)
+		userAWSRepo := userRepo.NewAWSRepository(s.awsClient)
+		userServices := userService.NewService(s.log, userRepos, userRedisRepo, userAWSRepo)
 		userHandlers := userHandler.NewHandler(s.log, userServices)
 
 		user := api.Group("/user", AuthMiddleware)
@@ -139,7 +142,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		quizRepos := quizRepo.NewRepository(s.db, s.tracer)
 		quizRedisRepo := quizRepo.NewQuizRedisRepo(s.rdb, s.tracer)
 		quizElasticRepo := quizRepo.NewElasticRepository(s.esClient, s.tracer)
-		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo, s.tracer)
+		quizAWSRepo := quizRepo.NewAWSRepository(s.awsClient)
+		quizServices := quizService.NewService(s.log, quizRepos, quizRedisRepo, userRedisRepo, quizElasticRepo, quizAWSRepo, s.tracer)
 		quizHandlers := quizHandler.NewHandler(s.log, quizServices, s.tracer)
 
 		questionRepos := questionRepo.NewRepository(s.db, s.tracer)
@@ -232,7 +236,6 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 		admin.GET("", adminUserHandlers.GetUsers)
 	}
 
-	e.Static("/public", "public")
 	e.Any("/socket.io/", func(c echo.Context) error {
 		s.ws.ServeHTTP(c.Response(), c.Request())
 		return nil
