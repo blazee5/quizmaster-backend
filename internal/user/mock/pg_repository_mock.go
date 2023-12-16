@@ -57,7 +57,7 @@ func (mr *MockRepositoryMockRecorder) ChangeAvatar(ctx, userID, file any) *gomoc
 // Delete mocks base method.
 func (m *MockRepository) Delete(ctx context.Context, userID int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAnswer", ctx, userID)
+	ret := m.ctrl.Call(m, "Delete", ctx, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -65,7 +65,22 @@ func (m *MockRepository) Delete(ctx context.Context, userID int) error {
 // Delete indicates an expected call of Delete.
 func (mr *MockRepositoryMockRecorder) Delete(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAnswer", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, userID)
+}
+
+// GetAvatarByID mocks base method.
+func (m *MockRepository) GetAvatarByID(ctx context.Context, userID int) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvatarByID", ctx, userID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvatarByID indicates an expected call of GetAvatarByID.
+func (mr *MockRepositoryMockRecorder) GetAvatarByID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarByID", reflect.TypeOf((*MockRepository)(nil).GetAvatarByID), ctx, userID)
 }
 
 // GetByID mocks base method.
@@ -116,7 +131,7 @@ func (mr *MockRepositoryMockRecorder) GetResults(ctx, userID any) *gomock.Call {
 // Update mocks base method.
 func (m *MockRepository) Update(ctx context.Context, userID int, input domain.UpdateUser) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAnswer", ctx, userID, input)
+	ret := m.ctrl.Call(m, "Update", ctx, userID, input)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -124,5 +139,5 @@ func (m *MockRepository) Update(ctx context.Context, userID int, input domain.Up
 // Update indicates an expected call of Update.
 func (mr *MockRepositoryMockRecorder) Update(ctx, userID, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnswer", reflect.TypeOf((*MockRepository)(nil).Update), ctx, userID, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), ctx, userID, input)
 }

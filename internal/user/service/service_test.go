@@ -31,8 +31,9 @@ func TestService_GetByID(t *testing.T) {
 
 	log := logger.NewLogger()
 	mockUserRepo := mock_user.NewMockRepository(ctrl)
+	mockUserAWSRepo := mock_user.NewMockAWSRepository(ctrl)
 	mockUserRedisRepo := mock_user.NewMockRedisRepository(ctrl)
-	userService := NewService(log, mockUserRepo, mockUserRedisRepo)
+	userService := NewService(log, mockUserRepo, mockUserRedisRepo, mockUserAWSRepo)
 
 	mockUserRedisRepo.EXPECT().GetByIDCtx(ctx, "1").Return(&user, nil)
 
