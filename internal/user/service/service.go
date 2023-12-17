@@ -113,7 +113,7 @@ func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *mult
 		return err
 	}
 
-	err = s.repo.ChangeAvatar(ctx, userID, avatar)
+	err = s.repo.ChangeAvatar(ctx, userID, "avatar/"+avatar)
 
 	if err != nil {
 		span.RecordError(err)

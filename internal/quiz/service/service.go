@@ -257,7 +257,7 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeade
 		return err
 	}
 
-	err = s.repo.UploadImage(ctx, quizID, fileName)
+	err = s.repo.UploadImage(ctx, quizID, "quizzes/"+fileName)
 
 	if err != nil {
 		span.RecordError(err)
@@ -269,7 +269,7 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeade
 	err = s.elasticRepo.UpdateIndex(ctx, quizID, models.Quiz{
 		Title:       quiz.Title,
 		Description: quiz.Description,
-		Image:       fileName,
+		Image:       "quizzes/" + fileName,
 	})
 
 	if err != nil {
