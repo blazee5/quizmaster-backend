@@ -10,6 +10,7 @@ package mock_user
 
 import (
 	context "context"
+	multipart "mime/multipart"
 	reflect "reflect"
 
 	domain "github.com/blazee5/quizmaster-backend/internal/domain"
@@ -41,23 +42,23 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // ChangeAvatar mocks base method.
-func (m *MockService) ChangeAvatar(ctx context.Context, userID int, file string) error {
+func (m *MockService) ChangeAvatar(ctx context.Context, userID int, fileHeader *multipart.FileHeader) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeAvatar", ctx, userID, file)
+	ret := m.ctrl.Call(m, "ChangeAvatar", ctx, userID, fileHeader)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ChangeAvatar indicates an expected call of ChangeAvatar.
-func (mr *MockServiceMockRecorder) ChangeAvatar(ctx, userID, file any) *gomock.Call {
+func (mr *MockServiceMockRecorder) ChangeAvatar(ctx, userID, fileHeader any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAvatar", reflect.TypeOf((*MockService)(nil).ChangeAvatar), ctx, userID, file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAvatar", reflect.TypeOf((*MockService)(nil).ChangeAvatar), ctx, userID, fileHeader)
 }
 
 // Delete mocks base method.
 func (m *MockService) Delete(ctx context.Context, userID int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAnswer", ctx, userID)
+	ret := m.ctrl.Call(m, "Delete", ctx, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -65,7 +66,7 @@ func (m *MockService) Delete(ctx context.Context, userID int) error {
 // Delete indicates an expected call of Delete.
 func (mr *MockServiceMockRecorder) Delete(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAnswer", reflect.TypeOf((*MockService)(nil).Delete), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockService)(nil).Delete), ctx, userID)
 }
 
 // GetByID mocks base method.
@@ -83,40 +84,10 @@ func (mr *MockServiceMockRecorder) GetByID(ctx, userID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockService)(nil).GetByID), ctx, userID)
 }
 
-// GetQuizzes mocks base method.
-func (m *MockService) GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetQuizzes", ctx, userID)
-	ret0, _ := ret[0].([]models.Quiz)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetQuizzes indicates an expected call of GetQuizzes.
-func (mr *MockServiceMockRecorder) GetQuizzes(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuizzes", reflect.TypeOf((*MockService)(nil).GetQuizzes), ctx, userID)
-}
-
-// GetResults mocks base method.
-func (m *MockService) GetResults(ctx context.Context, userID int) ([]models.Quiz, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResults", ctx, userID)
-	ret0, _ := ret[0].([]models.Quiz)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetResults indicates an expected call of GetResults.
-func (mr *MockServiceMockRecorder) GetResults(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResults", reflect.TypeOf((*MockService)(nil).GetResults), ctx, userID)
-}
-
 // Update mocks base method.
 func (m *MockService) Update(ctx context.Context, userID int, input domain.UpdateUser) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAnswer", ctx, userID, input)
+	ret := m.ctrl.Call(m, "Update", ctx, userID, input)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -124,5 +95,5 @@ func (m *MockService) Update(ctx context.Context, userID int, input domain.Updat
 // Update indicates an expected call of Update.
 func (mr *MockServiceMockRecorder) Update(ctx, userID, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnswer", reflect.TypeOf((*MockService)(nil).Update), ctx, userID, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockService)(nil).Update), ctx, userID, input)
 }
