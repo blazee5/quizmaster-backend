@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	socketio "github.com/vchitai/go-socket.io/v4"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"net/http"
@@ -51,6 +52,10 @@ func (h *Handler) NewResult(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while create result: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -106,6 +111,10 @@ func (h *Handler) SaveResult(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while save results: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -159,6 +168,10 @@ func (h *Handler) SubmitResult(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while submit result: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})
@@ -183,6 +196,10 @@ func (h *Handler) UpdateResults(quizID int) interface{} {
 
 	if err != nil {
 		h.log.Infof("error while get quiz results: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return "server error"
 	}
 

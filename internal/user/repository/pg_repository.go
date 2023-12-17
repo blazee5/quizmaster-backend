@@ -6,23 +6,32 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"slices"
 )
 
 type Repository struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	tracer trace.Tracer
 }
 
-func NewRepository(db *sqlx.DB) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *sqlx.DB, tracer trace.Tracer) *Repository {
+	return &Repository{db: db, tracer: tracer}
 }
 
 func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInfo, error) {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.GetByID")
+	defer span.End()
+
 	var user models.ShortUser
 
 	err := repo.db.QueryRowxContext(ctx, "SELECT id, username, email, avatar FROM users WHERE id = $1", userID).StructScan(&user)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.UserInfo{}, err
 	}
 
@@ -31,6 +40,9 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 	err = repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.UserInfo{}, err
 	}
 
@@ -46,12 +58,18 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 		ORDER BY r.score DESC`
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.UserInfo{}, err
 	}
 
 	rows, err := repo.db.QueryxContext(ctx, query, userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.UserInfo{}, err
 	}
 
@@ -61,7 +79,7 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 		var userResult models.UserResult
 		var quiz models.Quiz
 
-		err := rows.Scan(
+		err = rows.Scan(
 			&quiz.ID,
 			&quiz.Title,
 			&quiz.Description,
@@ -73,6 +91,9 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 			&userResult.CreatedAt,
 		)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return models.UserInfo{}, err
 		}
 
@@ -84,6 +105,9 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 	}
 
 	if err := rows.Err(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return models.UserInfo{}, err
 	}
 
@@ -95,11 +119,17 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 }
 
 func (repo *Repository) GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error) {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.GetQuizzes")
+	defer span.End()
+
 	quizzes := make([]models.Quiz, 0)
 
 	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes WHERE user_id = $1", userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
@@ -107,12 +137,18 @@ func (repo *Repository) GetQuizzes(ctx context.Context, userID int) ([]models.Qu
 }
 
 func (repo *Repository) GetResults(ctx context.Context, userID int) ([]models.Quiz, error) {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.GetResults")
+	defer span.End()
+
 	quizzes := make([]models.Quiz, 0)
 
 	rows, err := repo.db.QueryxContext(ctx, "SELECT quiz_id FROM results WHERE user_id = $1", userID)
 	defer rows.Close()
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
@@ -123,12 +159,18 @@ func (repo *Repository) GetResults(ctx context.Context, userID int) ([]models.Qu
 		err := rows.Scan(&quizID)
 
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return nil, err
 		}
 
 		err = repo.db.QueryRowxContext(ctx, "SELECT * FROM quizzes WHERE id = $1", quizID).StructScan(&quiz)
 
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return nil, err
 		}
 
@@ -141,11 +183,17 @@ func (repo *Repository) GetResults(ctx context.Context, userID int) ([]models.Qu
 }
 
 func (repo *Repository) GetAvatarByID(ctx context.Context, userID int) (string, error) {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.GetAvatarByID")
+	defer span.End()
+
 	var avatar string
 
 	err := repo.db.QueryRowxContext(ctx, "SELECT avatar FROM users WHERE id = $1", userID).Scan(&avatar)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return "", err
 	}
 
@@ -153,9 +201,15 @@ func (repo *Repository) GetAvatarByID(ctx context.Context, userID int) (string, 
 }
 
 func (repo *Repository) ChangeAvatar(ctx context.Context, userID int, file string) error {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.ChangeAvatar")
+	defer span.End()
+
 	_, err := repo.db.ExecContext(ctx, "UPDATE users SET avatar = $1 WHERE id = $2", file, userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -163,9 +217,15 @@ func (repo *Repository) ChangeAvatar(ctx context.Context, userID int, file strin
 }
 
 func (repo *Repository) Update(ctx context.Context, userID int, input domain.UpdateUser) error {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.Update")
+	defer span.End()
+
 	_, err := repo.db.ExecContext(ctx, "UPDATE users SET username = COALESCE(NULLIF($1, ''), username) WHERE id = $2", input.Username, userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -173,14 +233,23 @@ func (repo *Repository) Update(ctx context.Context, userID int, input domain.Upd
 }
 
 func (repo *Repository) Delete(ctx context.Context, userID int) error {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.Delete")
+	defer span.End()
+
 	res, err := repo.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 

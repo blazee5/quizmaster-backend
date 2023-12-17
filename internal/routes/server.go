@@ -124,15 +124,15 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 
 	api := e.Group("/api")
 	{
-		userRepos := userRepo.NewRepository(s.db)
+		userRepos := userRepo.NewRepository(s.db, s.tracer)
 		userRedisRepo := userRepo.NewUserRedisRepo(s.rdb)
 		userAWSRepo := userRepo.NewAWSRepository(s.awsClient)
-		userServices := userService.NewService(s.log, userRepos, userRedisRepo, userAWSRepo)
-		userHandlers := userHandler.NewHandler(s.log, userServices)
+		userServices := userService.NewService(s.log, userRepos, userRedisRepo, userAWSRepo, s.tracer)
+		userHandlers := userHandler.NewHandler(s.log, userServices, s.tracer)
 
 		user := api.Group("/user", AuthMiddleware)
 		{
-			user.GET("/me", userHandlers.Get)
+			user.GET("/me", userHandlers.GetMe)
 			user.GET("/:id", userHandlers.GetByID)
 			user.POST("/avatar", userHandlers.UploadAvatar)
 			user.PUT("", userHandlers.Update)

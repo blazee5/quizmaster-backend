@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
-	"github.com/blazee5/quizmaster-backend/internal/quiz"
+	quizService "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
@@ -18,11 +18,11 @@ import (
 
 type Handler struct {
 	log     *zap.SugaredLogger
-	service quiz.Service
+	service quizService.Service
 	tracer  trace.Tracer
 }
 
-func NewHandler(log *zap.SugaredLogger, service quiz.Service, tracer trace.Tracer) *Handler {
+func NewHandler(log *zap.SugaredLogger, service quizService.Service, tracer trace.Tracer) *Handler {
 	return &Handler{log: log, service: service, tracer: tracer}
 }
 
