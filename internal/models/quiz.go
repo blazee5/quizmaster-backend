@@ -16,3 +16,11 @@ type QuizInfo struct {
 	Title       string `json:"title" db:"title" redis:"title"`
 	Description string `json:"description" db:"description" redis:"description"`
 }
+
+type QuizList struct {
+	Total      int    `json:"total"`
+	TotalPages int    `json:"total_pages"`
+	Page       int    `json:"page"`
+	Size       int    `json:"size"`
+	Quizzes    []Quiz `json:"quizzes"`
+}

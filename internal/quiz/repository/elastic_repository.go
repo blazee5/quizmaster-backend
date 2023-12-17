@@ -9,6 +9,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"math"
 	"strconv"
 )
 
@@ -21,7 +22,7 @@ func NewElasticRepository(client *elasticsearch.Client, tracer trace.Tracer) *El
 	return &ElasticRepository{client: client, tracer: tracer}
 }
 
-func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.QuizInfo) error {
+func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.Quiz) error {
 	ctx, span := repo.tracer.Start(ctx, "quizElasticRepo.CreateIndex")
 	defer span.End()
 
@@ -57,11 +58,13 @@ func (repo *ElasticRepository) CreateIndex(ctx context.Context, input models.Qui
 	return nil
 }
 
-func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([]models.QuizInfo, error) {
+func (repo *ElasticRepository) SearchIndex(ctx context.Context, input, sortBy, sortDir string, page, size int) (models.QuizList, error) {
 	ctx, span := repo.tracer.Start(ctx, "quizElasticRepo.SearchIndex")
 	defer span.End()
 
 	query := map[string]any{
+		"from": (page - 1) * size,
+		"size": size,
 		"query": map[string]any{
 			"bool": map[string]any{
 				"should": []map[string]any{
@@ -81,6 +84,11 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 				},
 			},
 		},
+		"sort": []map[string]any{
+			{
+				sortBy: sortDir,
+			},
+		},
 	}
 
 	dataBytes, err := json.Marshal(&query)
@@ -88,7 +96,7 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return nil, err
+		return models.QuizList{}, err
 	}
 
 	response, err := repo.client.Search(
@@ -101,7 +109,7 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return nil, err
+		return models.QuizList{}, err
 	}
 	defer response.Body.Close()
 
@@ -109,15 +117,15 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 		span.RecordError(err)
 		span.SetStatus(codes.Error, response.String())
 
-		return nil, err
+		return models.QuizList{}, err
 	}
 	type EsHits struct {
 		Hits struct {
 			Total struct {
-				Value int64 `json:"value"`
+				Value int `json:"value"`
 			} `json:"total"`
 			Hits []struct {
-				Source models.QuizInfo `json:"_source"`
+				Source models.Quiz `json:"_source"`
 			} `json:"hits"`
 		} `json:"hits"`
 	}
@@ -127,23 +135,33 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input string) ([
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return nil, err
+		return models.QuizList{}, err
 	}
 
-	quizzes := make([]models.QuizInfo, len(hits.Hits.Hits))
+	quizzes := make([]models.Quiz, len(hits.Hits.Hits))
+
 	for i, source := range hits.Hits.Hits {
 		quizzes[i] = source.Source
 	}
-	return quizzes, nil
+
+	total := hits.Hits.Total.Value
+
+	return models.QuizList{
+		Total:      total,
+		TotalPages: int(math.Ceil(float64(total) / float64(size))),
+		Page:       page,
+		Size:       size,
+		Quizzes:    quizzes,
+	}, nil
 }
 
-func (repo *ElasticRepository) UpdateIndex(ctx context.Context, id int, input models.QuizInfo) error {
+func (repo *ElasticRepository) UpdateIndex(ctx context.Context, id int, input models.Quiz) error {
 	ctx, span := repo.tracer.Start(ctx, "quizElasticRepo.DeleteIndex")
 	defer span.End()
 
 	body, err := json.Marshal(map[string]any{
 		"script": map[string]any{
-			"source": fmt.Sprintf("ctx._source.title = '%s'; ctx._source.description = '%s'", input.Title, input.Description),
+			"source": fmt.Sprintf("ctx._source.title = '%s'; ctx._source.description = '%s'; ctx._source.image = '%s'", input.Title, input.Description, input.Image),
 			"lang":   "painless",
 		},
 		"query": map[string]any{

@@ -3,11 +3,13 @@ package repository
 import (
 	"context"
 	"database/sql"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"math"
 )
 
 type Repository struct {
@@ -19,41 +21,80 @@ func NewRepository(db *sqlx.DB, tracer trace.Tracer) *Repository {
 	return &Repository{db: db, tracer: tracer}
 }
 
-func (repo *Repository) GetAll(ctx context.Context) ([]models.Quiz, error) {
+func (repo *Repository) GetAll(ctx context.Context, sortBy, sortDir string, page, size int) (models.QuizList, error) {
 	ctx, span := repo.tracer.Start(ctx, "quizRepo.GetAll")
 	defer span.End()
 
-	quizzes := make([]models.Quiz, 0)
+	var total int
+	var offset int
 
-	err := repo.db.SelectContext(ctx, &quizzes, "SELECT * FROM quizzes")
+	if size > 0 {
+		offset = (page - 1) * size
+	}
+
+	err := repo.db.QueryRowxContext(ctx, "SELECT COUNT(*) FROM quizzes").Scan(&total)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return nil, err
+		return models.QuizList{}, err
 	}
 
-	return quizzes, nil
+	quizzes := make([]models.Quiz, 0)
+
+	sql, args, err := sq.
+		Select("id", "title", "description", "image", "user_id", "created_at").
+		From("quizzes").
+		OrderBy(sortBy + " " + sortDir).
+		Limit(uint64(size)).
+		Offset(uint64(offset)).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return models.QuizList{}, err
+	}
+
+	err = repo.db.SelectContext(ctx, &quizzes, sql, args...)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return models.QuizList{}, err
+	}
+
+	return models.QuizList{
+		Total:      total,
+		TotalPages: int(math.Ceil(float64(total) / float64(size))),
+		Page:       page,
+		Size:       size,
+		Quizzes:    quizzes,
+	}, nil
 }
 
-func (repo *Repository) Create(ctx context.Context, userID int, input domain.Quiz) (int, error) {
+func (repo *Repository) Create(ctx context.Context, userID int, input domain.Quiz) (models.Quiz, error) {
 	ctx, span := repo.tracer.Start(ctx, "quizRepo.Create")
 	defer span.End()
 
-	var quizID int
+	var quiz models.Quiz
 
-	err := repo.db.QueryRowxContext(ctx, "INSERT INTO quizzes (title, description, user_id) VALUES ($1, $2, $3) RETURNING id",
-		input.Title, input.Description, userID).Scan(&quizID)
+	err := repo.db.QueryRowxContext(ctx, `INSERT INTO quizzes (title, description, user_id)
+		VALUES ($1, $2, $3) RETURNING id, title, description, image, user_id, created_at`,
+		input.Title, input.Description, userID).StructScan(&quiz)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return 0, err
+		return models.Quiz{}, err
 	}
 
-	return quizID, nil
+	return quiz, nil
 }
 
 func (repo *Repository) GetByID(ctx context.Context, id int) (models.Quiz, error) {
@@ -74,23 +115,26 @@ func (repo *Repository) GetByID(ctx context.Context, id int) (models.Quiz, error
 	return quiz, nil
 }
 
-func (repo *Repository) Update(ctx context.Context, quizID int, input domain.Quiz) error {
+func (repo *Repository) Update(ctx context.Context, quizID int, input domain.Quiz) (models.Quiz, error) {
 	ctx, span := repo.tracer.Start(ctx, "quizRepo.Update")
 	defer span.End()
 
+	var quiz models.Quiz
+
 	err := repo.db.QueryRowxContext(ctx, `UPDATE quizzes SET
 		title = COALESCE(NULLIF($1, ''), title),
-		description = COALESCE(NULLIF($2, ''), description) WHERE id = $3`,
-		input.Title, input.Description, quizID).Err()
+		description = COALESCE(NULLIF($2, ''), description) WHERE id = $3
+		RETURNING id, title, description, image, user_id, created_at`,
+		input.Title, input.Description, quizID).StructScan(&quiz)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return err
+		return models.Quiz{}, err
 	}
 
-	return nil
+	return quiz, nil
 }
 
 func (repo *Repository) Delete(ctx context.Context, id int) error {

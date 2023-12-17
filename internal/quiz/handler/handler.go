@@ -30,7 +30,23 @@ func (h *Handler) GetAllQuizzes(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "quiz.GetAllQuizzes")
 	defer span.End()
 
-	quizzes, err := h.service.GetAll(ctx)
+	title := c.QueryParam("title")
+	sortBy := c.QueryParam("sortBy")
+	sortDir := c.QueryParam("sortDir")
+
+	page, err := strconv.Atoi(c.QueryParam("page"))
+
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	size, err := strconv.Atoi(c.QueryParam("size"))
+
+	if err != nil || size < 1 {
+		size = 10
+	}
+
+	quizzes, err := h.service.GetAll(ctx, title, sortBy, sortDir, page, size)
 
 	if err != nil {
 		h.log.Infof("error while get all quizzes: %s", err)
@@ -78,22 +94,6 @@ func (h *Handler) GetQuiz(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, quiz)
-}
-
-func (h *Handler) SearchByTitle(c echo.Context) error {
-	ctx, span := h.tracer.Start(c.Request().Context(), "quiz.SearchByTitle")
-	defer span.End()
-
-	title := c.QueryParam("title")
-
-	quizzes, err := h.service.Search(ctx, title)
-
-	if err != nil {
-		h.log.Infof("error while search quiz: %v", err)
-		return err
-	}
-
-	return c.JSON(http.StatusOK, quizzes)
 }
 
 func (h *Handler) CreateQuiz(c echo.Context) error {
