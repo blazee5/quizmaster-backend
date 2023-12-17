@@ -43,7 +43,7 @@ func (repo *Repository) GetAll(ctx context.Context) ([]models.ShortUser, error) 
 
 	users := make([]models.ShortUser, 0)
 
-	err := repo.db.SelectContext(ctx, &users, "SELECT * FROM users")
+	err := repo.db.SelectContext(ctx, &users, "SELECT id, username, email, avatar FROM users")
 
 	if err != nil {
 		span.RecordError(err)
