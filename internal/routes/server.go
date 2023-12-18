@@ -35,6 +35,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -112,6 +113,8 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) InitRoutes(e *echo.Echo) {
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	authRepos := authRepo.NewRepository(s.db, s.tracer)
 	authServices := authService.NewService(s.log, authRepos, s.tracer)
 	authHandlers := authHandler.NewHandler(s.log, authServices, s.tracer)

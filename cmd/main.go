@@ -13,7 +13,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/swaggo/echo-swagger"
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"net/http"
 	"os"
@@ -50,7 +49,6 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:3000", "https://quizer-opal.vercel.app"},
 		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},

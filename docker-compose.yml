@@ -33,7 +33,7 @@ services:
     - "4318:4318"
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio
     ports:
       - '9000:9000'
     environment:
