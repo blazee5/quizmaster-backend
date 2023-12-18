@@ -5,14 +5,11 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	"github.com/blazee5/quizmaster-backend/internal/user"
-	"github.com/google/uuid"
+	"github.com/blazee5/quizmaster-backend/lib/files"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
-	"io"
 	"mime/multipart"
-	"net/http"
-	"path/filepath"
 	"strconv"
 )
 
@@ -71,7 +68,7 @@ func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *mult
 		return err
 	}
 
-	file, err := fileHeader.Open()
+	contentType, bytes, avatar, err := files.PrepareImage(fileHeader)
 
 	if err != nil {
 		span.RecordError(err)
@@ -80,28 +77,12 @@ func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *mult
 		return err
 	}
 
-	bytes, err := io.ReadAll(file)
+	if avatar != "" {
+		err = s.awsRepo.DeleteFile(ctx, avatar)
 
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return err
-	}
-
-	contentType := http.DetectContentType(bytes)
-
-	uuid, err := uuid.NewUUID()
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return err
-	}
-
-	if avatar == "" {
-		avatar = uuid.String() + filepath.Ext(fileHeader.Filename)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = s.awsRepo.SaveFile(ctx, avatar, contentType, bytes)
@@ -113,7 +94,7 @@ func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *mult
 		return err
 	}
 
-	err = s.repo.ChangeAvatar(ctx, userID, "avatar/"+avatar)
+	err = s.repo.ChangeAvatar(ctx, userID, avatar)
 
 	if err != nil {
 		span.RecordError(err)

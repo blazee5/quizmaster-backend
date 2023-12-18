@@ -4,23 +4,26 @@ import (
 	"context"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
-	"github.com/blazee5/quizmaster-backend/internal/question"
+	questionRepo "github.com/blazee5/quizmaster-backend/internal/question"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
+	"github.com/blazee5/quizmaster-backend/lib/files"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"mime/multipart"
 )
 
 type Service struct {
 	log      *zap.SugaredLogger
-	repo     question.Repository
+	repo     questionRepo.Repository
 	quizRepo quizRepo.Repository
+	awsRepo  questionRepo.AWSRepository
 	tracer   trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo question.Repository, quizRepo quizRepo.Repository, tracer trace.Tracer) *Service {
-	return &Service{log: log, repo: repo, quizRepo: quizRepo, tracer: tracer}
+func NewService(log *zap.SugaredLogger, repo questionRepo.Repository, quizRepo quizRepo.Repository, awsRepo questionRepo.AWSRepository, tracer trace.Tracer) *Service {
+	return &Service{log: log, repo: repo, quizRepo: quizRepo, awsRepo: awsRepo, tracer: tracer}
 }
 
 func (s *Service) Create(ctx context.Context, userID, quizID int) (int, error) {
@@ -81,7 +84,16 @@ func (s *Service) Update(ctx context.Context, id, userID, quizID int, input doma
 		return err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.repo.GetQuestionByID(ctx, id)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return http_errors.PermissionDenied
 	}
 
@@ -126,7 +138,7 @@ func (s *Service) Delete(ctx context.Context, id, userID, quizID int) error {
 	return nil
 }
 
-func (s *Service) UploadImage(ctx context.Context, id, userID, quizID int, filename string) error {
+func (s *Service) UploadImage(ctx context.Context, id, userID, quizID int, fileHeader *multipart.FileHeader) error {
 	ctx, span := s.tracer.Start(ctx, "questionService.UploadImage")
 	defer span.End()
 
@@ -139,11 +151,46 @@ func (s *Service) UploadImage(ctx context.Context, id, userID, quizID int, filen
 		return err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.repo.GetQuestionByID(ctx, id)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return http_errors.PermissionDenied
 	}
 
-	err = s.repo.UploadImage(ctx, id, filename)
+	contentType, bytes, fileName, err := files.PrepareImage(fileHeader)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	if question.Image != "" {
+		err = s.awsRepo.DeleteFile(ctx, question.Image)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	err = s.awsRepo.SaveFile(ctx, fileName, contentType, bytes)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	err = s.repo.UploadImage(ctx, id, fileName)
 
 	if err != nil {
 		span.RecordError(err)
@@ -168,7 +215,16 @@ func (s *Service) DeleteImage(ctx context.Context, id, userID, quizID int) error
 		return err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.repo.GetQuestionByID(ctx, id)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return http_errors.PermissionDenied
 	}
 

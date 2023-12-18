@@ -263,6 +263,12 @@ func (h *Handler) UploadImage(c echo.Context) error {
 		})
 	}
 
+	if errors.Is(err, http_errors.ErrInvalidImage) {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid image",
+		})
+	}
+
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",

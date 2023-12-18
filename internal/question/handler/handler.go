@@ -247,11 +247,17 @@ func (h *Handler) UploadImage(c echo.Context) error {
 		})
 	}
 
-	err = h.service.UploadImage(ctx, questionID, userID, quizID, file.Filename)
+	err = h.service.UploadImage(ctx, questionID, userID, quizID, file)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
 			"message": "quiz not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.ErrInvalidImage) {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid image",
 		})
 	}
 

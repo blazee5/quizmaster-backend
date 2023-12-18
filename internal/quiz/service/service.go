@@ -6,15 +6,12 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/internal/user"
+	"github.com/blazee5/quizmaster-backend/lib/files"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
-	"io"
 	"mime/multipart"
-	"net/http"
-	"path/filepath"
 	"strconv"
 )
 
@@ -222,30 +219,21 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeade
 		return http_errors.PermissionDenied
 	}
 
-	file, err := fileHeader.Open()
+	contentType, bytes, fileName, err := files.PrepareImage(fileHeader)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
-	bytes, err := io.ReadAll(file)
+	if quiz.Image != "" {
+		err = s.awsRepo.DeleteFile(ctx, quiz.Image)
 
-	if err != nil {
-		return err
-	}
-
-	contentType := http.DetectContentType(bytes)
-
-	uuid, err := uuid.NewUUID()
-
-	if err != nil {
-		return err
-	}
-
-	fileName := quiz.Image
-
-	if fileName == "" {
-		fileName = uuid.String() + filepath.Ext(fileHeader.Filename)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = s.awsRepo.SaveFile(ctx, fileName, contentType, bytes)
@@ -257,7 +245,7 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeade
 		return err
 	}
 
-	err = s.repo.UploadImage(ctx, quizID, "quizzes/"+fileName)
+	err = s.repo.UploadImage(ctx, quizID, fileName)
 
 	if err != nil {
 		span.RecordError(err)
@@ -269,7 +257,7 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeade
 	err = s.elasticRepo.UpdateIndex(ctx, quizID, models.Quiz{
 		Title:       quiz.Title,
 		Description: quiz.Description,
-		Image:       "quizzes/" + fileName,
+		Image:       fileName,
 	})
 
 	if err != nil {

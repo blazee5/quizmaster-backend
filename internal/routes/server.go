@@ -169,7 +169,8 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 			quiz.DELETE("/:id", quizHandlers.DeleteQuiz, AuthMiddleware)
 			quiz.DELETE("/:id/image", quizHandlers.DeleteImage, AuthMiddleware)
 
-			questionServices := questionService.NewService(s.log, questionRepos, quizRepos, s.tracer)
+			questionAWSRepos := questionRepo.NewAWSRepository(s.awsClient)
+			questionServices := questionService.NewService(s.log, questionRepos, quizRepos, questionAWSRepos, s.tracer)
 			questionHandlers := questionHandler.NewHandler(s.log, questionServices, s.tracer)
 
 			question := quiz.Group("/:id/questions", AuthMiddleware)

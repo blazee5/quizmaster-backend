@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	avatarsBucketName = "avatars"
+	questionBucketName = "questions"
 )
 
 type AWSRepository struct {
@@ -26,21 +26,21 @@ func (s *AWSRepository) SaveFile(ctx context.Context, fileName, contentType stri
 
 	file := bytes.NewReader(chunk)
 
-	bucketExists, err := s.client.BucketExists(ctx, avatarsBucketName)
+	bucketExists, err := s.client.BucketExists(ctx, questionBucketName)
 
 	if err != nil {
 		return err
 	}
 
 	if !bucketExists {
-		err := s.client.MakeBucket(ctx, avatarsBucketName, minio.MakeBucketOptions{})
+		err := s.client.MakeBucket(ctx, questionBucketName, minio.MakeBucketOptions{})
 
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = s.client.PutObject(ctx, avatarsBucketName, fileName, file, file.Size(), options)
+	_, err = s.client.PutObject(ctx, questionBucketName, fileName, file, file.Size(), options)
 
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (s *AWSRepository) SaveFile(ctx context.Context, fileName, contentType stri
 }
 
 func (s *AWSRepository) DeleteFile(ctx context.Context, fileName string) error {
-	if err := s.client.RemoveObject(ctx, avatarsBucketName, fileName, minio.RemoveObjectOptions{}); err != nil {
+	if err := s.client.RemoveObject(ctx, questionBucketName, fileName, minio.RemoveObjectOptions{}); err != nil {
 		return err
 	}
 
