@@ -38,6 +38,20 @@ func (m *MockAWSRepository) EXPECT() *MockAWSRepositoryMockRecorder {
 	return m.recorder
 }
 
+// DeleteFile mocks base method.
+func (m *MockAWSRepository) DeleteFile(ctx context.Context, fileName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFile", ctx, fileName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFile indicates an expected call of DeleteFile.
+func (mr *MockAWSRepositoryMockRecorder) DeleteFile(ctx, fileName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockAWSRepository)(nil).DeleteFile), ctx, fileName)
+}
+
 // SaveFile mocks base method.
 func (m *MockAWSRepository) SaveFile(ctx context.Context, fileName, contentType string, chunk []byte) error {
 	m.ctrl.T.Helper()
