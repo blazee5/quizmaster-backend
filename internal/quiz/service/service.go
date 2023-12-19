@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"mime/multipart"
 	"strconv"
+	"strings"
 )
 
 type Service struct {
@@ -58,7 +59,7 @@ func (s *Service) GetAll(ctx context.Context, title, sortBy, sortDir string, pag
 			sortDir = "asc"
 		}
 
-		quizzes, err = s.elasticRepo.SearchIndex(ctx, title, sortBy, sortDir, page, size)
+		quizzes, err = s.elasticRepo.SearchIndex(ctx, strings.ToLower(title), sortBy, sortDir, page, size)
 	}
 
 	if err != nil {
