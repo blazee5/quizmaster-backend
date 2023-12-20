@@ -52,6 +52,23 @@ func (s *Service) GetByQuestionID(ctx context.Context, quizID, questionID int) (
 	return s.repo.GetAnswersInfoByQuestionID(ctx, questionID)
 }
 
+func (s *Service) GetByQuestionIDForUser(ctx context.Context, quizID, questionID, userID int) ([]models.Answer, error) {
+	ctx, span := s.tracer.Start(ctx, "answerService.GetByQuestionIDForUser")
+	defer span.End()
+
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if quiz.UserID != userID {
+		return nil, http_errors.PermissionDenied
+	}
+
+	return s.repo.GetAnswersByQuestionID(ctx, questionID)
+}
+
 func (s *Service) Update(ctx context.Context, answerID, userID, quizID int, input domain.Answer) error {
 	ctx, span := s.tracer.Start(ctx, "answerService.Update")
 	defer span.End()

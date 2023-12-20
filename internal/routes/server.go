@@ -192,6 +192,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 				answer := question.Group("/:questionID/answers")
 				{
 					answer.GET("", answerHandlers.GetAnswers)
+					answer.GET("/correct", answerHandlers.GetAnswersForUser)
 					answer.POST("", answerHandlers.CreateAnswer)
 					answer.PUT("/:answerID", answerHandlers.UpdateAnswer)
 					answer.PUT("/order", answerHandlers.ChangeOrder)
