@@ -68,3 +68,15 @@ func GenerateNewTokenCookie(token string) *http.Cookie {
 		SameSite: http.SameSiteNoneMode,
 	}
 }
+
+func DeleteTokenCookie() *http.Cookie {
+	return &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
+	}
+}

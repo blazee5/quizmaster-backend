@@ -142,3 +142,24 @@ func (h *Handler) SignIn(c echo.Context) error {
 		"message": "success",
 	})
 }
+
+// @Summary Sign out
+// @Tags auth
+// @Description Sign out
+// @ID sign-out
+// @Accept json
+// @Produce json
+// @Success 200 {object} string
+// @Failure 500 {object} string
+// @Router /auth/signout [post]
+func (h *Handler) SignOut(c echo.Context) error {
+	_, span := h.tracer.Start(c.Request().Context(), "auth.SignOut")
+	defer span.End()
+
+	cookie := authLib.DeleteTokenCookie()
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "success",
+	})
+}

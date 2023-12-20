@@ -123,6 +123,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 	{
 		auth.POST("/signup", authHandlers.SignUp)
 		auth.POST("/signin", authHandlers.SignIn)
+		auth.POST("/signout", authHandlers.SignOut)
 	}
 
 	api := e.Group("/api")
