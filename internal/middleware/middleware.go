@@ -1,4 +1,4 @@
-package routes
+package middleware
 
 import (
 	"github.com/blazee5/quizmaster-backend/lib/auth"
