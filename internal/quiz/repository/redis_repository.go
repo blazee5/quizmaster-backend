@@ -58,7 +58,7 @@ func (repo *QuizRedisRepo) DeleteQuizCtx(ctx context.Context, key string) error 
 	ctx, span := repo.tracer.Start(ctx, "quizRedisRepo.DeleteQuizCtx")
 	defer span.End()
 
-	if err := repo.redisClient.Del(ctx, key).Err(); err != nil {
+	if err := repo.redisClient.Del(ctx, "quiz:"+key).Err(); err != nil {
 		return err
 	}
 

@@ -162,6 +162,13 @@ func (s *Service) Update(ctx context.Context, userID, quizID int, input domain.Q
 		return err
 	}
 
+	if err = s.quizRedisRepo.DeleteQuizCtx(ctx, strconv.Itoa(quizID)); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
 	return nil
 }
 

@@ -123,7 +123,7 @@ func (repo *Repository) Update(ctx context.Context, quizID int, input domain.Qui
 
 	err := repo.db.QueryRowxContext(ctx, `UPDATE quizzes SET
 		title = COALESCE(NULLIF($1, ''), title),
-		description = COALESCE(NULLIF($2, ''), description) WHERE id = $3
+		description = $2 WHERE id = $3
 		RETURNING id, title, description, image, user_id, created_at`,
 		input.Title, input.Description, quizID).StructScan(&quiz)
 
