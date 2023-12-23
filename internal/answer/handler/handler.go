@@ -88,6 +88,12 @@ func (h *Handler) GetAnswers(c echo.Context) error {
 
 	answers, err := h.service.GetByQuestionID(ctx, quizID, questionID)
 
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
 	if err != nil {
 		h.log.Infof("error while get answers by question id: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{

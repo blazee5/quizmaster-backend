@@ -5,6 +5,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/answer"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
+	questionRepo "github.com/blazee5/quizmaster-backend/internal/question"
 	quizRepo "github.com/blazee5/quizmaster-backend/internal/quiz"
 	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"go.opentelemetry.io/otel/trace"
@@ -12,14 +13,15 @@ import (
 )
 
 type Service struct {
-	log      *zap.SugaredLogger
-	repo     answer.Repository
-	quizRepo quizRepo.Repository
-	tracer   trace.Tracer
+	log          *zap.SugaredLogger
+	repo         answer.Repository
+	quizRepo     quizRepo.Repository
+	questionRepo questionRepo.Repository
+	tracer       trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRepo.Repository, tracer trace.Tracer) *Service {
-	return &Service{log: log, repo: repo, quizRepo: quizRepo, tracer: tracer}
+func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRepo.Repository, questionRepo questionRepo.Repository, tracer trace.Tracer) *Service {
+	return &Service{log: log, repo: repo, quizRepo: quizRepo, questionRepo: questionRepo, tracer: tracer}
 }
 
 func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (int, error) {
@@ -47,6 +49,16 @@ func (s *Service) GetByQuestionID(ctx context.Context, quizID, questionID int) (
 
 	if err != nil {
 		return nil, err
+	}
+
+	question, err := s.questionRepo.GetQuestionByID(ctx, questionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if question.Type == "input" {
+		return nil, http_errors.PermissionDenied
 	}
 
 	return s.repo.GetAnswersInfoByQuestionID(ctx, questionID)
