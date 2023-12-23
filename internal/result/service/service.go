@@ -99,6 +99,10 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	}
 
 	if question.Type == "choice" {
+		if input.AnswerID == 0 {
+			return http_errors.WrongArgument
+		}
+
 		err := s.ProcessChoiceAnswer(ctx, question.ID, userID, input)
 
 		if err != nil {
@@ -108,6 +112,10 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 			return err
 		}
 	} else {
+		if input.AnswerText == "" {
+			return http_errors.WrongArgument
+		}
+
 		err := s.ProcessInputAnswer(ctx, question.ID, userID, input)
 
 		if err != nil {

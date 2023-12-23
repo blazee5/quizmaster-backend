@@ -10,7 +10,7 @@ type Answer struct {
 type UserAnswer struct {
 	AttemptID  int    `json:"attempt_id" validate:"required"`
 	QuestionID int    `json:"question_id" validate:"required"`
-	AnswerID   int    `json:"answer_id" validate:"required"`
+	AnswerID   int    `json:"answer_id"`
 	AnswerText string `json:"answer_text"`
 }
 

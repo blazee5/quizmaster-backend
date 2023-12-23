@@ -109,6 +109,12 @@ func (h *Handler) SaveResult(c echo.Context) error {
 		})
 	}
 
+	if errors.Is(err, http_errors.WrongArgument) {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "wrong argument",
+		})
+	}
+
 	if err != nil {
 		h.log.Infof("error while save results: %s", err)
 

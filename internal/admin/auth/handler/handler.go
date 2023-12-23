@@ -5,7 +5,7 @@ import (
 	"errors"
 	adminauth "github.com/blazee5/quizmaster-backend/internal/admin/auth"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
-	"github.com/blazee5/quizmaster-backend/lib/auth"
+	authLib "github.com/blazee5/quizmaster-backend/lib/auth"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -64,7 +64,19 @@ func (h *Handler) SignInAdmin(c echo.Context) error {
 		})
 	}
 
-	cookie := auth.GenerateNewTokenCookie(token)
+	cookie := authLib.GenerateNewTokenCookie(token)
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "success",
+	})
+}
+
+func (h *Handler) SignOutAdmin(c echo.Context) error {
+	_, span := h.tracer.Start(c.Request().Context(), "admin.auth.SignOut")
+	defer span.End()
+
+	cookie := authLib.DeleteTokenCookie()
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, echo.Map{

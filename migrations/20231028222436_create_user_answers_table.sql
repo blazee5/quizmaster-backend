@@ -9,7 +9,6 @@ CREATE TABLE user_answers(
     text        VARCHAR(255) NOT NULL DEFAULT '',
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE,
-    FOREIGN KEY (answer_id) REFERENCES answers (id) ON DELETE CASCADE,
     FOREIGN KEY (result_id) REFERENCES results (id) ON DELETE CASCADE
 );
 

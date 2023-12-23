@@ -18,6 +18,7 @@ func InitAnswerRoutes(answerGroup *echo.Group, log *zap.SugaredLogger, db *sqlx.
 
 	answerGroup.GET("", handlers.GetAnswers)
 	answerGroup.POST("", handlers.CreateAnswer)
+	answerGroup.GET("/correct", handlers.GetAnswersForUser)
 	answerGroup.PUT("/:answerID", handlers.UpdateAnswer)
 	answerGroup.PUT("/order", handlers.ChangeOrder)
 	answerGroup.DELETE("/:answerID", handlers.DeleteAnswer)

@@ -165,10 +165,17 @@ func (repo *Repository) SubmitResult(ctx context.Context, userID, resultID int) 
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
-		return models.UsersResult{}, nil
+		return models.UsersResult{}, err
 	}
 
 	err = repo.db.QueryRowxContext(ctx, "SELECT id, score, created_at FROM results WHERE id = $1", resultID).StructScan(&result)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return models.UsersResult{}, err
+	}
 
 	return result, nil
 }
