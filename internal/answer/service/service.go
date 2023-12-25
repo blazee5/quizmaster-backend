@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/blazee5/quizmaster-backend/internal/answer"
+	answerRepo "github.com/blazee5/quizmaster-backend/internal/answer"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
 	questionRepo "github.com/blazee5/quizmaster-backend/internal/question"
@@ -14,13 +14,13 @@ import (
 
 type Service struct {
 	log          *zap.SugaredLogger
-	repo         answer.Repository
+	repo         answerRepo.Repository
 	quizRepo     quizRepo.Repository
 	questionRepo questionRepo.Repository
 	tracer       trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo answer.Repository, quizRepo quizRepo.Repository, questionRepo questionRepo.Repository, tracer trace.Tracer) *Service {
+func NewService(log *zap.SugaredLogger, repo answerRepo.Repository, quizRepo quizRepo.Repository, questionRepo questionRepo.Repository, tracer trace.Tracer) *Service {
 	return &Service{log: log, repo: repo, quizRepo: quizRepo, questionRepo: questionRepo, tracer: tracer}
 }
 
@@ -34,7 +34,13 @@ func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (i
 		return 0, err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.questionRepo.GetQuestionByID(ctx, questionID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return 0, http_errors.PermissionDenied
 	}
 
@@ -74,42 +80,40 @@ func (s *Service) GetByQuestionIDForUser(ctx context.Context, quizID, questionID
 		return nil, err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.questionRepo.GetQuestionByID(ctx, questionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return nil, http_errors.PermissionDenied
 	}
 
 	return s.repo.GetAnswersByQuestionID(ctx, questionID)
 }
 
-func (s *Service) Update(ctx context.Context, answerID, userID, quizID int, input domain.Answer) error {
+func (s *Service) Update(ctx context.Context, answerID, userID, quizID, questionID int, input domain.Answer) error {
 	ctx, span := s.tracer.Start(ctx, "answerService.Update")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, questionID, answerID)
 
 	if err != nil {
 		return err
-	}
-
-	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
 	}
 
 	return s.repo.Update(ctx, answerID, input)
 }
 
-func (s *Service) Delete(ctx context.Context, answerID, userID, quizID int) error {
+func (s *Service) Delete(ctx context.Context, answerID, userID, quizID, questionID int) error {
 	ctx, span := s.tracer.Start(ctx, "answerService.Delete")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, questionID, answerID)
 
 	if err != nil {
 		return err
-	}
-
-	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
 	}
 
 	return s.repo.Delete(ctx, answerID)
@@ -125,7 +129,13 @@ func (s *Service) ChangeOrder(ctx context.Context, userID, quizID, questionID in
 		return err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.questionRepo.GetQuestionByID(ctx, questionID)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return http_errors.PermissionDenied
 	}
 
@@ -133,6 +143,32 @@ func (s *Service) ChangeOrder(ctx context.Context, userID, quizID, questionID in
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *Service) checkPermissions(ctx context.Context, userID, quizID, questionID, answerID int) error {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
+		return err
+	}
+
+	question, err := s.questionRepo.GetQuestionByID(ctx, questionID)
+
+	if err != nil {
+		return err
+	}
+
+	answer, err := s.repo.GetByID(ctx, answerID)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID || answer.QuestionID != questionID {
+		return http_errors.PermissionDenied
 	}
 
 	return nil

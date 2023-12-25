@@ -122,7 +122,16 @@ func (s *Service) Delete(ctx context.Context, id, userID, quizID int) error {
 		return err
 	}
 
-	if quiz.UserID != userID {
+	question, err := s.repo.GetQuestionByID(ctx, id)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
 		return http_errors.PermissionDenied
 	}
 

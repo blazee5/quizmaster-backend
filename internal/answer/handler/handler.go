@@ -165,6 +165,14 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 		})
 	}
 
+	questionID, err := strconv.Atoi(c.Param("questionID"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid question id",
+		})
+	}
+
 	answerID, err := strconv.Atoi(c.Param("answerID"))
 
 	if err != nil {
@@ -187,7 +195,19 @@ func (h *Handler) UpdateAnswer(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Update(ctx, answerID, userID, quizID, input)
+	err = h.service.Update(ctx, answerID, userID, quizID, questionID, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "answer not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
 
 	if err != nil {
 		h.log.Infof("error while update answer: %s", err)
@@ -212,6 +232,14 @@ func (h *Handler) DeleteAnswer(c echo.Context) error {
 		})
 	}
 
+	questionID, err := strconv.Atoi(c.Param("questionID"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid question id",
+		})
+	}
+
 	answerID, err := strconv.Atoi(c.Param("answerID"))
 
 	if err != nil {
@@ -220,7 +248,7 @@ func (h *Handler) DeleteAnswer(c echo.Context) error {
 		})
 	}
 
-	err = h.service.Delete(ctx, answerID, userID, quizID)
+	err = h.service.Delete(ctx, answerID, userID, quizID, questionID)
 
 	if errors.Is(err, http_errors.PermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{

@@ -155,6 +155,12 @@ func (h *Handler) UpdateQuestion(c echo.Context) error {
 
 	err = h.service.Update(ctx, questionID, userID, quizID, input)
 
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
 	if err != nil {
 		h.log.Infof("error while update question: %s", err)
 
