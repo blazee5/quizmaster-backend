@@ -75,26 +75,13 @@ func (s *Service) Update(ctx context.Context, id, userID, quizID int, input doma
 	ctx, span := s.tracer.Start(ctx, "questionService.Update")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, id)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return err
-	}
-
-	question, err := s.repo.GetQuestionByID(ctx, id)
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return err
-	}
-
-	if quiz.UserID != userID || question.QuizID != quizID {
-		return http_errors.PermissionDenied
 	}
 
 	err = s.repo.Update(ctx, id, input)
@@ -113,26 +100,13 @@ func (s *Service) Delete(ctx context.Context, id, userID, quizID int) error {
 	ctx, span := s.tracer.Start(ctx, "questionService.Delete")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, id)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return err
-	}
-
-	question, err := s.repo.GetQuestionByID(ctx, id)
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return err
-	}
-
-	if quiz.UserID != userID || question.QuizID != quizID {
-		return http_errors.PermissionDenied
 	}
 
 	err = s.repo.Delete(ctx, id)
@@ -215,26 +189,13 @@ func (s *Service) DeleteImage(ctx context.Context, id, userID, quizID int) error
 	ctx, span := s.tracer.Start(ctx, "questionService.DeleteImage")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, id)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return err
-	}
-
-	question, err := s.repo.GetQuestionByID(ctx, id)
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return err
-	}
-
-	if quiz.UserID != userID || question.QuizID != quizID {
-		return http_errors.PermissionDenied
 	}
 
 	err = s.repo.DeleteImage(ctx, id)
@@ -249,21 +210,17 @@ func (s *Service) DeleteImage(ctx context.Context, id, userID, quizID int) error
 	return nil
 }
 
-func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input domain.ChangeQuestionOrder) error {
+func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input domain.QuestionOrder) error {
 	ctx, span := s.tracer.Start(ctx, "questionService.ChangeOrder")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, input.QuestionID)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return err
-	}
-
-	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
 	}
 
 	err = s.repo.ChangeOrder(ctx, input)
@@ -273,6 +230,26 @@ func (s *Service) ChangeOrder(ctx context.Context, userID, quizID int, input dom
 		span.SetStatus(codes.Error, err.Error())
 
 		return err
+	}
+
+	return nil
+}
+
+func (s *Service) checkPermissions(ctx context.Context, userID, quizID, questionID int) error {
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+
+	if err != nil {
+		return err
+	}
+
+	question, err := s.repo.GetQuestionByID(ctx, questionID)
+
+	if err != nil {
+		return err
+	}
+
+	if quiz.UserID != userID || question.QuizID != quizID {
+		return http_errors.PermissionDenied
 	}
 
 	return nil

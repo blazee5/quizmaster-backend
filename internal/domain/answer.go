@@ -14,11 +14,7 @@ type UserAnswer struct {
 	AnswerText string `json:"answer_text"`
 }
 
-type OrderAnswerItem struct {
+type AnswerOrder struct {
 	AnswerID int `json:"answer_id" validate:"required"`
 	OrderID  int `json:"order_id" validate:"required"`
-}
-
-type ChangeAnswerOrder struct {
-	Orders []OrderAnswerItem `json:"orders" validate:"required"`
 }

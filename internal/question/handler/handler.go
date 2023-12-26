@@ -340,7 +340,7 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "question.ChangeOrder")
 	defer span.End()
 
-	var input domain.ChangeQuestionOrder
+	var input domain.QuestionOrder
 
 	userID := c.Get("userID").(int)
 	quizID, err := strconv.Atoi(c.Param("id"))
@@ -370,6 +370,12 @@ func (h *Handler) ChangeOrder(c echo.Context) error {
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
 			"message": "question not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.PermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
 		})
 	}
 

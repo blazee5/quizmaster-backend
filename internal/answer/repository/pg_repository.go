@@ -70,7 +70,7 @@ func (repo *Repository) GetAnswersInfoByQuestionID(ctx context.Context, question
 	answers := make([]models.AnswerInfo, 0)
 
 	err := repo.db.SelectContext(ctx, &answers, `SELECT a.id, a.text, a.question_id, a.order_id FROM answers a
-		WHERE a.question_id = $1 ORDER BY a.order_id ASC`, questionID)
+		WHERE a.question_id = $1 ORDER BY a.order_id`, questionID)
 
 	if err != nil {
 		return nil, err
@@ -109,26 +109,13 @@ func (repo *Repository) Delete(ctx context.Context, answerID int) error {
 	return nil
 }
 
-func (repo *Repository) ChangeOrder(ctx context.Context, questionID int, input domain.ChangeAnswerOrder) error {
+func (repo *Repository) ChangeOrder(ctx context.Context, questionID int, input domain.AnswerOrder) error {
 	ctx, span := repo.tracer.Start(ctx, "answerRepo.ChangeOrder")
 	defer span.End()
 
-	tx, err := repo.db.Beginx()
+	_, err := repo.db.ExecContext(ctx, "UPDATE answers SET order_id = $1 WHERE id = $2 AND question_id = $3", input.OrderID, input.AnswerID, questionID)
 
 	if err != nil {
-		return err
-	}
-
-	for _, item := range input.Orders {
-		_, err := tx.ExecContext(ctx, "UPDATE answers SET order_id = $1 WHERE id = $2 AND question_id = $3", item.OrderID, item.AnswerID, questionID)
-
-		if err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
 		return err
 	}
 

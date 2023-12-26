@@ -119,24 +119,14 @@ func (s *Service) Delete(ctx context.Context, answerID, userID, quizID, question
 	return s.repo.Delete(ctx, answerID)
 }
 
-func (s *Service) ChangeOrder(ctx context.Context, userID, quizID, questionID int, input domain.ChangeAnswerOrder) error {
+func (s *Service) ChangeOrder(ctx context.Context, userID, quizID, questionID int, input domain.AnswerOrder) error {
 	ctx, span := s.tracer.Start(ctx, "answerService.ChangeOrder")
 	defer span.End()
 
-	quiz, err := s.quizRepo.GetByID(ctx, quizID)
+	err := s.checkPermissions(ctx, userID, quizID, questionID, input.AnswerID)
 
 	if err != nil {
 		return err
-	}
-
-	question, err := s.questionRepo.GetQuestionByID(ctx, questionID)
-
-	if err != nil {
-		return err
-	}
-
-	if quiz.UserID != userID || question.QuizID != quizID {
-		return http_errors.PermissionDenied
 	}
 
 	err = s.repo.ChangeOrder(ctx, questionID, input)

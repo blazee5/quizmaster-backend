@@ -7,11 +7,7 @@ type Question struct {
 	QuizID  int
 }
 
-type OrderQuestionItem struct {
+type QuestionOrder struct {
 	QuestionID int `json:"question_id" validate:"required"`
 	OrderID    int `json:"order_id" validate:"required"`
-}
-
-type ChangeQuestionOrder struct {
-	Orders []OrderQuestionItem `json:"orders" validate:"required"`
 }
