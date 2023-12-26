@@ -50,7 +50,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "https://quizer-opal.vercel.app"},
+		AllowOrigins:     []string{"http://localhost:3000", "https://quizer-opal.vercel.app", "https://quizmaster-admin.vercel.app"},
 		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 		AllowCredentials: true,
 	}))
