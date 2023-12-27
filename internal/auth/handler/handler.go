@@ -35,7 +35,6 @@ func NewHandler(log *zap.SugaredLogger, service auth.Service, tracer trace.Trace
 // @Param user body domain.SignUpRequest true "user"
 // @Success 200 {object} string
 // @Failure 400 {object} string
-// @Failure 400 {object} string
 // @Failure 500 {object} string
 // @Router /auth/signup [post]
 func (h *Handler) SignUp(c echo.Context) error {

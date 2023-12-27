@@ -2,6 +2,8 @@ basePath: /
 definitions:
   domain.Question:
     properties:
+      order_id:
+        type: integer
       quizID:
         type: integer
       title:
@@ -13,6 +15,15 @@ definitions:
         type: string
     required:
     - type
+    type: object
+  domain.Quiz:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - title
     type: object
   domain.SignInRequest:
     properties:
@@ -43,48 +54,12 @@ definitions:
 host: localhost:3000
 info:
   contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
+    name: blaze
+    url: https://www.github.com/blazee5
   description: This is a QuizMaster backend docs.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
   title: QuizMaster Backend API
   version: "1.0"
 paths:
-  /api/question:
-    post:
-      consumes:
-      - application/json
-      description: create question
-      operationId: create-question
-      parameters:
-      - description: question
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/domain.Question'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            type: string
-      summary: Create question
-      tags:
-      - question
   /auth/signin:
     post:
       consumes:
@@ -114,6 +89,26 @@ paths:
           schema:
             type: string
       summary: Sign in
+      tags:
+      - auth
+  /auth/signout:
+    post:
+      consumes:
+      - application/json
+      description: Sign out
+      operationId: sign-out
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Sign out
       tags:
       - auth
   /auth/signup:
@@ -147,6 +142,343 @@ paths:
       summary: Sign up
       tags:
       - auth
+  /quiz:
+    get:
+      consumes:
+      - application/json
+      description: Get all quizzes
+      operationId: get-all-quizzes
+      parameters:
+      - description: title
+        in: query
+        name: title
+        type: string
+      - description: sortBy
+        in: query
+        name: sortBy
+        type: string
+      - description: sortDir
+        in: query
+        name: sortDir
+        type: string
+      - description: size
+        in: query
+        name: size
+        type: integer
+      - description: page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all quizzes
+      tags:
+      - quiz
+    post:
+      consumes:
+      - application/json
+      description: Create quiz
+      operationId: create-quiz
+      parameters:
+      - description: Quiz
+        in: body
+        name: quiz
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Quiz'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create quiz
+      tags:
+      - quiz
+  /quiz/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete quiz
+      operationId: delete-quiz
+      parameters:
+      - description: quizID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete quiz
+      tags:
+      - quiz
+    get:
+      consumes:
+      - application/json
+      description: Get quiz by id
+      operationId: get-quiz
+      parameters:
+      - description: quizID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get quiz
+      tags:
+      - quiz
+    put:
+      consumes:
+      - application/json
+      description: Update quiz
+      operationId: update-quiz
+      parameters:
+      - description: Quiz
+        in: body
+        name: quiz
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Quiz'
+      - description: quizID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update quiz
+      tags:
+      - quiz
+  /quiz/{id}/image:
+    delete:
+      consumes:
+      - application/json
+      description: Delete image
+      operationId: delete-image
+      parameters:
+      - description: quizID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete image
+      tags:
+      - quiz
+    post:
+      consumes:
+      - application/json
+      description: Upload image
+      operationId: upload-image
+      parameters:
+      - description: quizID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: image
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Upload image
+      tags:
+      - quiz
+  /quiz/{quizID}/question:
+    get:
+      consumes:
+      - application/json
+      description: Get quiz questions
+      operationId: get-quiz-questions
+      parameters:
+      - description: quizID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get quiz questions
+      tags:
+      - question
+    post:
+      consumes:
+      - application/json
+      description: create question
+      operationId: create-question
+      parameters:
+      - description: question
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Question'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create question
+      tags:
+      - question
 securityDefinitions:
   ApiKeyAuth:
     in: cookie

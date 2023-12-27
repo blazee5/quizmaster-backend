@@ -35,8 +35,10 @@ func NewHandler(log *zap.SugaredLogger, service question.Service, tracer trace.T
 // @Param user body domain.Question true "question"
 // @Success 200 {object} string
 // @Failure 400 {object} string
+// @Failure 403 {object} string
+// @Failure 404 {object} string
 // @Failure 500 {object} string
-// @Router /api/question [post]
+// @Router /quiz/{quizID}/question [post]
 func (h *Handler) CreateQuestion(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "question.CreateQuestion")
 	defer span.End()
@@ -80,6 +82,18 @@ func (h *Handler) CreateQuestion(c echo.Context) error {
 	})
 }
 
+// @Summary Get quiz questions
+// @Tags question
+// @Description Get quiz questions
+// @ID get-quiz-questions
+// @Accept json
+// @Produce json
+// @Param id path int true "quizID"
+// @Success 200 {object} string
+// @Failure 400 {object} string
+// @Failure 404 {object} string
+// @Failure 500 {object} string
+// @Router /quiz/{quizID}/question [get]
 func (h *Handler) GetQuizQuestions(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "question.GetQuizQuestions")
 	defer span.End()
