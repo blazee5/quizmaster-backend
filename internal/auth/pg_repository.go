@@ -9,4 +9,5 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, input domain.SignUpRequest) (int, error)
 	ValidateUser(ctx context.Context, input domain.SignInRequest) (models.User, error)
+	CreateVerificationCode(ctx context.Context, userID int, codeType string, code string) error
 }

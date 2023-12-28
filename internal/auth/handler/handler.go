@@ -162,3 +162,41 @@ func (h *Handler) SignOut(c echo.Context) error {
 		"message": "success",
 	})
 }
+
+func (h *Handler) SendCode(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "user.SendCode")
+	defer span.End()
+
+	var input domain.VerificationCode
+
+	userID := c.Get("userID").(int)
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err := h.service.SendCode(ctx, userID, input)
+
+	if err != nil {
+		h.log.Infof("error while send code on email: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}

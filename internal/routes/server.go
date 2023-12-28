@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/minio/minio-go/v7"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 	socketio "github.com/vchitai/go-socket.io/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -25,18 +26,19 @@ const (
 )
 
 type Server struct {
-	echo      *echo.Echo
-	log       *zap.SugaredLogger
-	db        *sqlx.DB
-	rdb       *redis.Client
-	esClient  *elasticsearch.Client
-	ws        *socketio.Server
-	tracer    trace.Tracer
-	awsClient *minio.Client
+	echo       *echo.Echo
+	log        *zap.SugaredLogger
+	db         *sqlx.DB
+	rdb        *redis.Client
+	esClient   *elasticsearch.Client
+	ws         *socketio.Server
+	tracer     trace.Tracer
+	awsClient  *minio.Client
+	rabbitConn *amqp.Connection
 }
 
-func NewServer(echo *echo.Echo, log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer, awsClient *minio.Client) *Server {
-	return &Server{echo: echo, log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer, awsClient: awsClient}
+func NewServer(echo *echo.Echo, log *zap.SugaredLogger, db *sqlx.DB, rdb *redis.Client, esClient *elasticsearch.Client, ws *socketio.Server, tracer trace.Tracer, awsClient *minio.Client, rabbitConn *amqp.Connection) *Server {
+	return &Server{echo: echo, log: log, db: db, rdb: rdb, esClient: esClient, ws: ws, tracer: tracer, awsClient: awsClient, rabbitConn: rabbitConn}
 }
 
 func (s *Server) Run() error {

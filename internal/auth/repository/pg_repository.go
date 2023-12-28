@@ -47,3 +47,13 @@ func (repo *Repository) ValidateUser(ctx context.Context, input domain.SignInReq
 
 	return user, nil
 }
+
+func (repo *Repository) CreateVerificationCode(ctx context.Context, userID int, codeType, code string) error {
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO verification_codes (type, code, user_id) VALUES ($1, $2, $3)", codeType, code, userID).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

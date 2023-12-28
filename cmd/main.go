@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
+	"github.com/blazee5/quizmaster-backend/internal/email/handler"
 	"github.com/blazee5/quizmaster-backend/internal/routes"
 	"github.com/blazee5/quizmaster-backend/lib/db/aws"
 	"github.com/blazee5/quizmaster-backend/lib/db/postgres"
 	"github.com/blazee5/quizmaster-backend/lib/db/redis"
 	"github.com/blazee5/quizmaster-backend/lib/elastic"
 	"github.com/blazee5/quizmaster-backend/lib/logger"
+	"github.com/blazee5/quizmaster-backend/lib/rabbitmq"
 	"github.com/blazee5/quizmaster-backend/lib/tracer"
 	libValidator "github.com/blazee5/quizmaster-backend/lib/validator"
 	"github.com/go-playground/validator/v10"
@@ -46,6 +49,7 @@ func main() {
 	ws := socketio.NewServer(nil)
 	trace := tracer.InitTracer("Quizmaster")
 	awsClient := aws.NewAWSClient()
+	rabbitConn := rabbitmq.NewRabbitMQConn()
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -56,7 +60,7 @@ func main() {
 	}))
 
 	e.Validator = libValidator.NewValidator(validator.New())
-	server := routes.NewServer(e, log, db, rdb, esClient, ws, trace, awsClient)
+	server := routes.NewServer(e, log, db, rdb, esClient, ws, trace, awsClient, rabbitConn)
 
 	go func() {
 		log.Fatal(server.Run())
@@ -64,6 +68,10 @@ func main() {
 
 	go func() {
 		log.Fatal(ws.Serve())
+	}()
+
+	go func() {
+		handler.InitEmailConsumer(context.Background(), log, rabbitConn)
 	}()
 
 	quit := make(chan os.Signal, 1)

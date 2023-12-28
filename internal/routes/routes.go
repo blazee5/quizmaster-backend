@@ -29,7 +29,7 @@ func (s *Server) InitRoutes(e *echo.Echo) {
 	adminUsersGroup := admin.Group("/users", middleware.AdminMiddleware)
 	adminQuizzesGroup := admin.Group("/quizzes", middleware.AdminMiddleware)
 
-	authHandler.InitAuthRoutes(authGroup, s.log, s.db, s.tracer)
+	authHandler.InitAuthRoutes(authGroup, s.log, s.db, s.rabbitConn, s.tracer)
 	userHandler.InitUserRoutes(userGroup, s.log, s.db, s.rdb, s.awsClient, s.tracer)
 	quizHandler.InitQuizRoutes(quizGroup, s.log, s.db, s.rdb, s.esClient, s.awsClient, s.tracer)
 	resultHandler.InitResultRoutes(quizGroup, s.log, s.db, s.ws, s.tracer)
