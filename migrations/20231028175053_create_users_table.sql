@@ -7,6 +7,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     avatar VARCHAR(255) DEFAULT '',
     role_id INT NOT NULL DEFAULT 1,
+    is_verified BOOLEAN DEFAULT false,
     FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
 -- +goose StatementEnd

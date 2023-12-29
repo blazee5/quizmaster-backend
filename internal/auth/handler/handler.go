@@ -164,7 +164,7 @@ func (h *Handler) SignOut(c echo.Context) error {
 }
 
 func (h *Handler) SendCode(c echo.Context) error {
-	ctx, span := h.tracer.Start(c.Request().Context(), "user.SendCode")
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SendCode")
 	defer span.End()
 
 	var input domain.VerificationCode
@@ -189,6 +189,82 @@ func (h *Handler) SendCode(c echo.Context) error {
 
 	if err != nil {
 		h.log.Infof("error while send code on email: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}
+
+//func (h *Handler) ResetEmail(c echo.Context) error {
+//	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetEmail")
+//	defer span.End()
+//
+//	var input domain.VerificationCode
+//
+//	userID := c.Get("userID").(int)
+//
+//	if err := c.Bind(&input); err != nil {
+//		return c.JSON(http.StatusBadRequest, echo.Map{
+//			"message": "bad request",
+//		})
+//	}
+//
+//	if err := c.Validate(&input); err != nil {
+//		validateErr := err.(validator.ValidationErrors)
+//
+//		return c.JSON(http.StatusBadRequest, echo.Map{
+//			"message": response.ValidationError(validateErr),
+//		})
+//	}
+//
+//	err := h.service.SendCode(ctx, userID, input)
+//
+//	if err != nil {
+//		h.log.Infof("error while send code on email: %s", err)
+//
+//		span.RecordError(err)
+//		span.SetStatus(codes.Error, err.Error())
+//
+//		return c.JSON(http.StatusInternalServerError, echo.Map{
+//			"message": "server error",
+//		})
+//	}
+//
+//	return c.String(http.StatusOK, "OK")
+//}
+
+func (h *Handler) ResetPassword(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetPassword")
+	defer span.End()
+
+	var input domain.ResetPasswordRequest
+
+	userID := c.Get("userID").(int)
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err := h.service.ResetPassword(ctx, userID, input)
+
+	if err != nil {
+		h.log.Infof("error while reset password: %s", err)
 
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

@@ -48,8 +48,60 @@ func (repo *Repository) ValidateUser(ctx context.Context, input domain.SignInReq
 	return user, nil
 }
 
-func (repo *Repository) CreateVerificationCode(ctx context.Context, userID int, codeType, code string) error {
-	err := repo.db.QueryRowxContext(ctx, "INSERT INTO verification_codes (type, code, user_id) VALUES ($1, $2, $3)", codeType, code, userID).Err()
+func (repo *Repository) UpdateEmail(ctx context.Context, userID int, email string) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE users SET email = $1 WHERE id = $2", email, userID).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) UpdatePassword(ctx context.Context, userID int, password string) error {
+	err := repo.db.QueryRowxContext(ctx, "UPDATE users SET password = $1 WHERE id = $2", password, userID).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) CreateVerificationCode(ctx context.Context, userID int, codeType, code, email string) error {
+	ctx, span := repo.tracer.Start(ctx, "authRepo.CreateVerificationCode")
+	defer span.End()
+
+	err := repo.db.QueryRowxContext(ctx, "INSERT INTO verification_codes (type, code, user_id, email) VALUES ($1, $2, $3, $4)", codeType, code, userID, email).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *Repository) GetVerificationCode(ctx context.Context, code string) (models.VerificationCode, error) {
+	ctx, span := repo.tracer.Start(ctx, "authRepo.GetVerificationCode")
+	defer span.End()
+
+	var verificationCode models.VerificationCode
+
+	err := repo.db.QueryRowxContext(ctx, "SELECT id, type, code, user_id, expire_date FROM verification_codes WHERE code = $1", code).
+		Scan(&code)
+
+	if err != nil {
+		return models.VerificationCode{}, err
+	}
+
+	return verificationCode, nil
+}
+
+func (repo *Repository) DeleteVerificationCode(ctx context.Context, code string) error {
+	ctx, span := repo.tracer.Start(ctx, "authRepo.DeleteVerificationCode")
+	defer span.End()
+
+	err := repo.db.QueryRowxContext(ctx, "DELETE FROM verification_codes WHERE code = $1", code).Err()
 
 	if err != nil {
 		return err
