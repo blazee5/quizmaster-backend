@@ -12,6 +12,6 @@ type Repository interface {
 	UpdateEmail(ctx context.Context, userID int, email string) error
 	UpdatePassword(ctx context.Context, userID int, password string) error
 	CreateVerificationCode(ctx context.Context, userID int, codeType, code, email string) error
-	GetVerificationCode(ctx context.Context, code string) (models.VerificationCode, error)
-	DeleteVerificationCode(ctx context.Context, code string) error
+	GetVerificationCode(ctx context.Context, code, codeType string) (models.VerificationCode, error)
+	DeleteVerificationCode(ctx context.Context, id int) error
 }

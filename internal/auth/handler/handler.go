@@ -6,6 +6,7 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/auth"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	authLib "github.com/blazee5/quizmaster-backend/lib/auth"
+	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"github.com/blazee5/quizmaster-backend/lib/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -118,7 +119,7 @@ func (h *Handler) SignIn(c echo.Context) error {
 	token, err := h.service.GenerateToken(ctx, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return c.JSON(http.StatusNotFound, echo.Map{
+		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "invalid credentials",
 		})
 	}
@@ -201,43 +202,55 @@ func (h *Handler) SendCode(c echo.Context) error {
 	return c.String(http.StatusOK, "OK")
 }
 
-//func (h *Handler) ResetEmail(c echo.Context) error {
-//	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetEmail")
-//	defer span.End()
-//
-//	var input domain.VerificationCode
-//
-//	userID := c.Get("userID").(int)
-//
-//	if err := c.Bind(&input); err != nil {
-//		return c.JSON(http.StatusBadRequest, echo.Map{
-//			"message": "bad request",
-//		})
-//	}
-//
-//	if err := c.Validate(&input); err != nil {
-//		validateErr := err.(validator.ValidationErrors)
-//
-//		return c.JSON(http.StatusBadRequest, echo.Map{
-//			"message": response.ValidationError(validateErr),
-//		})
-//	}
-//
-//	err := h.service.SendCode(ctx, userID, input)
-//
-//	if err != nil {
-//		h.log.Infof("error while send code on email: %s", err)
-//
-//		span.RecordError(err)
-//		span.SetStatus(codes.Error, err.Error())
-//
-//		return c.JSON(http.StatusInternalServerError, echo.Map{
-//			"message": "server error",
-//		})
-//	}
-//
-//	return c.String(http.StatusOK, "OK")
-//}
+func (h *Handler) ResetEmail(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetEmail")
+	defer span.End()
+
+	var input domain.ResetEmailRequest
+
+	userID := c.Get("userID").(int)
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err := h.service.ResetEmail(ctx, userID, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "code not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.ErrCodeExpired) {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "code is expired",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while reset email: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}
 
 func (h *Handler) ResetPassword(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetPassword")
@@ -262,6 +275,18 @@ func (h *Handler) ResetPassword(c echo.Context) error {
 	}
 
 	err := h.service.ResetPassword(ctx, userID, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "code not found",
+		})
+	}
+
+	if errors.Is(err, http_errors.ErrCodeExpired) {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "code is expired",
+		})
+	}
 
 	if err != nil {
 		h.log.Infof("error while reset password: %s", err)

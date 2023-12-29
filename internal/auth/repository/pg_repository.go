@@ -81,14 +81,14 @@ func (repo *Repository) CreateVerificationCode(ctx context.Context, userID int, 
 	return nil
 }
 
-func (repo *Repository) GetVerificationCode(ctx context.Context, code string) (models.VerificationCode, error) {
+func (repo *Repository) GetVerificationCode(ctx context.Context, code, codeType string) (models.VerificationCode, error) {
 	ctx, span := repo.tracer.Start(ctx, "authRepo.GetVerificationCode")
 	defer span.End()
 
 	var verificationCode models.VerificationCode
 
-	err := repo.db.QueryRowxContext(ctx, "SELECT id, type, code, user_id, expire_date FROM verification_codes WHERE code = $1", code).
-		Scan(&code)
+	err := repo.db.QueryRowxContext(ctx, "SELECT id, type, code, user_id, email, expire_date FROM verification_codes WHERE code = $1 AND type = $2", code, codeType).
+		StructScan(&verificationCode)
 
 	if err != nil {
 		return models.VerificationCode{}, err
@@ -97,11 +97,11 @@ func (repo *Repository) GetVerificationCode(ctx context.Context, code string) (m
 	return verificationCode, nil
 }
 
-func (repo *Repository) DeleteVerificationCode(ctx context.Context, code string) error {
+func (repo *Repository) DeleteVerificationCode(ctx context.Context, id int) error {
 	ctx, span := repo.tracer.Start(ctx, "authRepo.DeleteVerificationCode")
 	defer span.End()
 
-	err := repo.db.QueryRowxContext(ctx, "DELETE FROM verification_codes WHERE code = $1", code).Err()
+	err := repo.db.QueryRowxContext(ctx, "DELETE FROM verification_codes WHERE id = $1", id).Err()
 
 	if err != nil {
 		return err

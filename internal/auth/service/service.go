@@ -8,21 +8,23 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/rabbitmq"
 	userRepo "github.com/blazee5/quizmaster-backend/internal/user"
 	authLib "github.com/blazee5/quizmaster-backend/lib/auth"
+	"github.com/blazee5/quizmaster-backend/lib/http_errors"
 	"github.com/blazee5/quizmaster-backend/lib/random"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"time"
 )
 
 type Service struct {
 	log      *zap.SugaredLogger
 	repo     auth.Repository
 	userRepo userRepo.Repository
-	producer *rabbitmq.Producer
+	producer rabbitmq.QueueProducer
 	tracer   trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo auth.Repository, userRepo userRepo.Repository, producer *rabbitmq.Producer, tracer trace.Tracer) *Service {
+func NewService(log *zap.SugaredLogger, repo auth.Repository, userRepo userRepo.Repository, producer rabbitmq.QueueProducer, tracer trace.Tracer) *Service {
 	return &Service{log: log, repo: repo, userRepo: userRepo, producer: producer, tracer: tracer}
 }
 
@@ -103,19 +105,58 @@ func (s *Service) SendCode(ctx context.Context, userID int, input domain.Verific
 	return nil
 }
 
-func (s *Service) ResetPassword(ctx context.Context, userID int, input domain.ResetPasswordRequest) error {
+func (s *Service) ResetEmail(ctx context.Context, userID int, input domain.ResetEmailRequest) error {
 	ctx, span := s.tracer.Start(ctx, "authService.ResetPassword")
 	defer span.End()
 
-	input.Password = authLib.GenerateHashPassword(input.Password)
-
-	err := s.repo.UpdatePassword(ctx, userID, input.Password)
+	code, err := s.repo.GetVerificationCode(ctx, input.Code, "email")
 
 	if err != nil {
 		return err
 	}
 
-	err = s.repo.DeleteVerificationCode(ctx, input.Code)
+	if code.ExpireDate.Before(time.Now()) {
+		return http_errors.ErrCodeExpired
+	}
+
+	err = s.repo.UpdateEmail(ctx, userID, code.Email)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.DeleteVerificationCode(ctx, code.ID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) ResetPassword(ctx context.Context, userID int, input domain.ResetPasswordRequest) error {
+	ctx, span := s.tracer.Start(ctx, "authService.ResetPassword")
+	defer span.End()
+
+	code, err := s.repo.GetVerificationCode(ctx, input.Code, "password")
+
+	if err != nil {
+		return err
+	}
+
+	if code.ExpireDate.Before(time.Now()) {
+		return http_errors.ErrCodeExpired
+	}
+
+	input.Password = authLib.GenerateHashPassword(input.Password)
+
+	err = s.repo.UpdatePassword(ctx, userID, input.Password)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.DeleteVerificationCode(ctx, code.ID)
 
 	if err != nil {
 		return err

@@ -8,6 +8,11 @@ import (
 	"log"
 )
 
+type QueueProducer interface {
+	InitProducer()
+	PublishMessage(ctx context.Context, msg []byte) error
+}
+
 type Producer struct {
 	log   *zap.SugaredLogger
 	conn  *amqp.Connection

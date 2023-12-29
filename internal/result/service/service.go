@@ -62,7 +62,7 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	}
 
 	if attempt.UserID != userID || attempt.IsCompleted {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	question, err := s.questionRepo.GetQuestionByID(ctx, input.QuestionID)
@@ -75,7 +75,7 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	}
 
 	if question.QuizID != quizID {
-		return http_errors.WrongArgument
+		return http_errors.ErrWrongArgument
 	}
 
 	answerExists, err := s.repo.GetUserAnswerByID(ctx, input.AnswerID, input.AttemptID)
@@ -88,7 +88,7 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	}
 
 	if answerExists {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	if err := s.repo.SaveUserAnswer(ctx, userID, input.QuestionID, input.AnswerID, input.AttemptID, input.AnswerText); err != nil {
@@ -100,7 +100,7 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 
 	if question.Type == "choice" {
 		if input.AnswerID == 0 {
-			return http_errors.WrongArgument
+			return http_errors.ErrWrongArgument
 		}
 
 		err := s.ProcessChoiceAnswer(ctx, question.ID, userID, input)
@@ -113,7 +113,7 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 		}
 	} else {
 		if input.AnswerText == "" {
-			return http_errors.WrongArgument
+			return http_errors.ErrWrongArgument
 		}
 
 		err := s.ProcessInputAnswer(ctx, question.ID, userID, input)
@@ -143,7 +143,7 @@ func (s *Service) ProcessChoiceAnswer(ctx context.Context, questionID, userID in
 	}
 
 	if answer.QuestionID != questionID {
-		return http_errors.WrongArgument
+		return http_errors.ErrWrongArgument
 	}
 
 	if answer.IsCorrect {

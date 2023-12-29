@@ -40,7 +40,7 @@ func (s *Service) Create(ctx context.Context, userID, quizID int) (int, error) {
 	}
 
 	if quiz.UserID != userID {
-		return 0, http_errors.PermissionDenied
+		return 0, http_errors.ErrPermissionDenied
 	}
 
 	id, err := s.repo.CreateQuestion(ctx, quizID)
@@ -144,7 +144,7 @@ func (s *Service) UploadImage(ctx context.Context, id, userID, quizID int, fileH
 	}
 
 	if quiz.UserID != userID || question.QuizID != quizID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	contentType, bytes, fileName, err := files.PrepareImage(fileHeader)
@@ -249,7 +249,7 @@ func (s *Service) checkPermissions(ctx context.Context, userID, quizID, question
 	}
 
 	if quiz.UserID != userID || question.QuizID != quizID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	return nil

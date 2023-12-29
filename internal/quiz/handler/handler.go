@@ -226,7 +226,7 @@ func (h *Handler) UpdateQuiz(c echo.Context) error {
 		})
 	}
 
-	if errors.Is(err, http_errors.PermissionDenied) {
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
 		})
@@ -281,7 +281,7 @@ func (h *Handler) DeleteQuiz(c echo.Context) error {
 		})
 	}
 
-	if errors.Is(err, http_errors.PermissionDenied) {
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
 		})
@@ -351,7 +351,7 @@ func (h *Handler) UploadImage(c echo.Context) error {
 		})
 	}
 
-	if errors.Is(err, http_errors.PermissionDenied) {
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
 		})
@@ -406,7 +406,7 @@ func (h *Handler) DeleteImage(c echo.Context) error {
 		})
 	}
 
-	if errors.Is(err, http_errors.PermissionDenied) {
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
 		})

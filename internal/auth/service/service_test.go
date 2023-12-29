@@ -5,6 +5,8 @@ import (
 	"github.com/blazee5/quizmaster-backend/internal/auth/mock"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
+	mock_rabbitmq "github.com/blazee5/quizmaster-backend/internal/rabbitmq/mock"
+	mock_user "github.com/blazee5/quizmaster-backend/internal/user/mock"
 	"github.com/blazee5/quizmaster-backend/lib/auth"
 	"github.com/blazee5/quizmaster-backend/lib/logger"
 	"github.com/blazee5/quizmaster-backend/lib/tracer"
@@ -29,7 +31,9 @@ func TestSignUp(t *testing.T) {
 
 	log := logger.NewLogger()
 	mockAuthRepo := mock_auth.NewMockRepository(ctrl)
-	authService := NewService(log, mockAuthRepo, tracer.InitTracer("main"))
+	mockProducer := mock_rabbitmq.NewMockQueueProducer(ctrl)
+	mockUserRepo := mock_user.NewMockRepository(ctrl)
+	authService := NewService(log, mockAuthRepo, mockUserRepo, mockProducer, tracer.InitTracer("main"))
 
 	mockAuthRepo.EXPECT().CreateUser(gomock.Any(), gomock.Eq(domain.SignUpRequest{
 		Username: "username",
@@ -59,7 +63,9 @@ func TestSignIn(t *testing.T) {
 	log := logger.NewLogger()
 
 	mockAuthRepo := mock_auth.NewMockRepository(ctrl)
-	authService := NewService(log, mockAuthRepo, tracer.InitTracer("main"))
+	mockProducer := mock_rabbitmq.NewMockQueueProducer(ctrl)
+	mockUserRepo := mock_user.NewMockRepository(ctrl)
+	authService := NewService(log, mockAuthRepo, mockUserRepo, mockProducer, tracer.InitTracer("main"))
 
 	mockAuthRepo.EXPECT().ValidateUser(gomock.Any(), gomock.Eq(domain.SignInRequest{
 		Email:    "email@gmail.com",

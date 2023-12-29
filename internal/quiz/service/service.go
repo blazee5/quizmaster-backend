@@ -143,7 +143,7 @@ func (s *Service) Update(ctx context.Context, userID, quizID int, input domain.Q
 	}
 
 	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	quiz, err = s.repo.Update(ctx, quizID, input)
@@ -186,7 +186,7 @@ func (s *Service) Delete(ctx context.Context, userID, quizID int) error {
 	}
 
 	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	err = s.repo.Delete(ctx, quizID)
@@ -224,7 +224,7 @@ func (s *Service) UploadImage(ctx context.Context, userID, quizID int, fileHeade
 	}
 
 	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	contentType, bytes, fileName, err := files.PrepareImage(fileHeader)
@@ -292,7 +292,7 @@ func (s *Service) DeleteImage(ctx context.Context, userID, quizID int) error {
 	}
 
 	if quiz.UserID != userID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	err = s.awsRepo.DeleteFile(ctx, quiz.Image)

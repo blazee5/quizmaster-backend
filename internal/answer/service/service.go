@@ -41,7 +41,7 @@ func (s *Service) Create(ctx context.Context, userID, quizID, questionID int) (i
 	}
 
 	if quiz.UserID != userID || question.QuizID != quizID {
-		return 0, http_errors.PermissionDenied
+		return 0, http_errors.ErrPermissionDenied
 	}
 
 	return s.repo.Create(ctx, questionID)
@@ -64,7 +64,7 @@ func (s *Service) GetByQuestionID(ctx context.Context, quizID, questionID int) (
 	}
 
 	if question.Type == "input" {
-		return nil, http_errors.PermissionDenied
+		return nil, http_errors.ErrPermissionDenied
 	}
 
 	return s.repo.GetAnswersInfoByQuestionID(ctx, questionID)
@@ -87,7 +87,7 @@ func (s *Service) GetByQuestionIDForUser(ctx context.Context, quizID, questionID
 	}
 
 	if quiz.UserID != userID || question.QuizID != quizID {
-		return nil, http_errors.PermissionDenied
+		return nil, http_errors.ErrPermissionDenied
 	}
 
 	return s.repo.GetAnswersByQuestionID(ctx, questionID)
@@ -158,7 +158,7 @@ func (s *Service) checkPermissions(ctx context.Context, userID, quizID, question
 	}
 
 	if quiz.UserID != userID || question.QuizID != quizID || answer.QuestionID != questionID {
-		return http_errors.PermissionDenied
+		return http_errors.ErrPermissionDenied
 	}
 
 	return nil

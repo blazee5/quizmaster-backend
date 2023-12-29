@@ -55,6 +55,77 @@ func (mr *MockRepositoryMockRecorder) CreateUser(ctx, input any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockRepository)(nil).CreateUser), ctx, input)
 }
 
+// CreateVerificationCode mocks base method.
+func (m *MockRepository) CreateVerificationCode(ctx context.Context, userID int, codeType, code, email string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateVerificationCode", ctx, userID, codeType, code, email)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateVerificationCode indicates an expected call of CreateVerificationCode.
+func (mr *MockRepositoryMockRecorder) CreateVerificationCode(ctx, userID, codeType, code, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVerificationCode", reflect.TypeOf((*MockRepository)(nil).CreateVerificationCode), ctx, userID, codeType, code, email)
+}
+
+// DeleteVerificationCode mocks base method.
+func (m *MockRepository) DeleteVerificationCode(ctx context.Context, id int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteVerificationCode", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteVerificationCode indicates an expected call of DeleteVerificationCode.
+func (mr *MockRepositoryMockRecorder) DeleteVerificationCode(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVerificationCode", reflect.TypeOf((*MockRepository)(nil).DeleteVerificationCode), ctx, id)
+}
+
+// GetVerificationCode mocks base method.
+func (m *MockRepository) GetVerificationCode(ctx context.Context, code, codeType string) (models.VerificationCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVerificationCode", ctx, code, codeType)
+	ret0, _ := ret[0].(models.VerificationCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVerificationCode indicates an expected call of GetVerificationCode.
+func (mr *MockRepositoryMockRecorder) GetVerificationCode(ctx, code, codeType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVerificationCode", reflect.TypeOf((*MockRepository)(nil).GetVerificationCode), ctx, code, codeType)
+}
+
+// UpdateEmail mocks base method.
+func (m *MockRepository) UpdateEmail(ctx context.Context, userID int, email string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEmail", ctx, userID, email)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateEmail indicates an expected call of UpdateEmail.
+func (mr *MockRepositoryMockRecorder) UpdateEmail(ctx, userID, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockRepository)(nil).UpdateEmail), ctx, userID, email)
+}
+
+// UpdatePassword mocks base method.
+func (m *MockRepository) UpdatePassword(ctx context.Context, userID int, password string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePassword", ctx, userID, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePassword indicates an expected call of UpdatePassword.
+func (mr *MockRepositoryMockRecorder) UpdatePassword(ctx, userID, password any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockRepository)(nil).UpdatePassword), ctx, userID, password)
+}
+
 // ValidateUser mocks base method.
 func (m *MockRepository) ValidateUser(ctx context.Context, input domain.SignInRequest) (models.User, error) {
 	m.ctrl.T.Helper()

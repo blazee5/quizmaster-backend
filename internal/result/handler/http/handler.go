@@ -103,13 +103,13 @@ func (h *Handler) SaveResult(c echo.Context) error {
 		})
 	}
 
-	if errors.Is(err, http_errors.PermissionDenied) {
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
 		})
 	}
 
-	if errors.Is(err, http_errors.WrongArgument) {
+	if errors.Is(err, http_errors.ErrWrongArgument) {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "wrong argument",
 		})
@@ -166,7 +166,7 @@ func (h *Handler) SubmitResult(c echo.Context) error {
 		})
 	}
 
-	if errors.Is(err, http_errors.PermissionDenied) {
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
 		return c.JSON(http.StatusForbidden, echo.Map{
 			"message": "permission denied",
 		})
