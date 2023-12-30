@@ -128,6 +128,40 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 	return c.JSON(http.StatusOK, questions)
 }
 
+func (h *Handler) Test(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.Test")
+	defer span.End()
+
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "invalid id",
+		})
+	}
+
+	questions, err := h.service.Test(ctx, id)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "quiz not found",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while get questions by quiz id: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, questions)
+}
+
 func (h *Handler) UpdateQuestion(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "question.UpdateQuestion")
 	defer span.End()

@@ -71,6 +71,22 @@ func (s *Service) GetQuestionsByID(ctx context.Context, id int) ([]models.Questi
 	return questions, nil
 }
 
+func (s *Service) Test(ctx context.Context, id int) ([]models.QuestionWithAnswers, error) {
+	ctx, span := s.tracer.Start(ctx, "questionService.Test")
+	defer span.End()
+
+	questions, err := s.repo.Test(ctx, id)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, err
+	}
+
+	return questions, nil
+}
+
 func (s *Service) Update(ctx context.Context, id, userID, quizID int, input domain.Question) error {
 	ctx, span := s.tracer.Start(ctx, "questionService.Update")
 	defer span.End()

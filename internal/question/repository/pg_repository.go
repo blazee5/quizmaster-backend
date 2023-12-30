@@ -64,6 +64,55 @@ func (repo *Repository) GetQuestionsByQuizID(ctx context.Context, quizID int) ([
 	return questions, nil
 }
 
+func (repo *Repository) Test(ctx context.Context, quizID int) ([]models.QuestionWithAnswers, error) {
+	ctx, span := repo.tracer.Start(ctx, "questionRepo.Test")
+	defer span.End()
+
+	questions := make([]models.QuestionWithAnswers, 0)
+
+	rows, err := repo.db.QueryxContext(ctx,
+		`SELECT q.id, q.title, q.image, q.quiz_id, q.type, q.order_id, a.id as answer_id, a.text
+		FROM questions q
+		LEFT JOIN answers a ON q.id = a.question_id
+		WHERE q.quiz_id = $1
+		ORDER BY q.order_id ASC`, quizID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	questionMap := make(map[int]*models.QuestionWithAnswers)
+
+	for rows.Next() {
+		var q models.QuestionWithAnswers
+		var a models.AnswerInfo
+
+		err := rows.Scan(
+			&q.ID, &q.Title, &q.Image, &q.QuizID, &q.Type, &q.OrderID,
+			&a.ID, &a.Text,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if existingQuestion, ok := questionMap[q.ID]; ok {
+			existingQuestion.Answers = append(existingQuestion.Answers, a)
+		} else {
+			q.Answers = []models.AnswerInfo{a}
+			questions = append(questions, q)
+
+			questionMap[q.ID] = &questions[len(questions)-1]
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return questions, nil
+}
+
 func (repo *Repository) Update(ctx context.Context, id int, input domain.Question) error {
 	ctx, span := repo.tracer.Start(ctx, "questionRepo.Update")
 	defer span.End()
