@@ -45,24 +45,8 @@ func (s *Service) SaveUserAnswer(ctx context.Context, userID, quizID int, input 
 	ctx, span := s.tracer.Start(ctx, "resultService.SaveUserAnswer")
 	defer span.End()
 
-	if _, err := s.quizRepo.GetByID(ctx, quizID); err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
+	if err := s.CheckPermissions(ctx, userID, quizID, input); err != nil {
 		return err
-	}
-
-	attempt, err := s.repo.GetByID(ctx, input.AttemptID)
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return err
-	}
-
-	if attempt.UserID != userID || attempt.IsCompleted {
-		return http_errors.ErrPermissionDenied
 	}
 
 	question, err := s.questionRepo.GetQuestionByID(ctx, input.QuestionID)
@@ -174,7 +158,7 @@ func (s *Service) ProcessInputAnswer(ctx context.Context, questionID, userID int
 	}
 
 	for _, ans := range correctAnswers {
-		if strings.ToLower(ans.Text) == strings.ToLower(input.AnswerText) {
+		if strings.EqualFold(ans.Text, input.AnswerText) {
 			err := s.repo.UpdateResult(ctx, input.AttemptID, userID, 1)
 
 			if err != nil {
@@ -186,6 +170,24 @@ func (s *Service) ProcessInputAnswer(ctx context.Context, questionID, userID int
 
 			break
 		}
+	}
+
+	return nil
+}
+
+func (s *Service) CheckPermissions(ctx context.Context, userID, quizID int, input domain.UserAnswer) error {
+	if _, err := s.quizRepo.GetByID(ctx, quizID); err != nil {
+		return err
+	}
+
+	attempt, err := s.repo.GetByID(ctx, input.AttemptID)
+
+	if err != nil {
+		return err
+	}
+
+	if attempt.UserID != userID || attempt.IsCompleted {
+		return http_errors.ErrPermissionDenied
 	}
 
 	return nil

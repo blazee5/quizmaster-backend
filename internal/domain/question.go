@@ -9,5 +9,5 @@ type Question struct {
 
 type QuestionOrder struct {
 	QuestionID int `json:"question_id" validate:"required"`
-	OrderID    int `json:"order_id" validate:"required"`
+	OrderID    int `json:"order_id"`
 }
