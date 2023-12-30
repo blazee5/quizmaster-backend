@@ -69,12 +69,18 @@ func (s *Service) SendCode(ctx context.Context, userID int, input domain.Verific
 	user, err := s.userRepo.GetByID(ctx, userID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
 	code := random.GenerateVerificationCode(8)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -85,6 +91,9 @@ func (s *Service) SendCode(ctx context.Context, userID int, input domain.Verific
 	err = s.repo.CreateVerificationCode(ctx, userID, input.Type, code, input.Email)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -99,6 +108,9 @@ func (s *Service) SendCode(ctx context.Context, userID int, input domain.Verific
 	err = s.producer.PublishMessage(ctx, bytes)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -112,6 +124,9 @@ func (s *Service) ResetEmail(ctx context.Context, userID int, input domain.Reset
 	code, err := s.repo.GetVerificationCode(ctx, input.Code, "email")
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -122,12 +137,18 @@ func (s *Service) ResetEmail(ctx context.Context, userID int, input domain.Reset
 	err = s.repo.UpdateEmail(ctx, userID, code.Email)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
 	err = s.repo.DeleteVerificationCode(ctx, code.ID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -141,6 +162,9 @@ func (s *Service) ResetPassword(ctx context.Context, userID int, input domain.Re
 	code, err := s.repo.GetVerificationCode(ctx, input.Code, "password")
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -153,12 +177,18 @@ func (s *Service) ResetPassword(ctx context.Context, userID int, input domain.Re
 	err = s.repo.UpdatePassword(ctx, userID, input.Password)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
 	err = s.repo.DeleteVerificationCode(ctx, code.ID)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 

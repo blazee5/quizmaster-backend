@@ -164,6 +164,16 @@ func (h *Handler) SignOut(c echo.Context) error {
 	})
 }
 
+// @Summary Send Code
+// @Tags auth
+// @Description Send Code for reset email or password
+// @ID send-code
+// @Accept json
+// @Produce json
+// @Param code body domain.VerificationCode true "verification code"
+// @Success 200 {object} string
+// @Failure 500 {object} string
+// @Router /auth/send-code [post]
 func (h *Handler) SendCode(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SendCode")
 	defer span.End()
@@ -202,6 +212,16 @@ func (h *Handler) SendCode(c echo.Context) error {
 	return c.String(http.StatusOK, "OK")
 }
 
+// @Summary Reset Email
+// @Tags auth
+// @Description Reset email
+// @ID reset-email
+// @Accept json
+// @Produce json
+// @Param email body domain.ResetEmailRequest true "code request"
+// @Success 200 {object} string
+// @Failure 500 {object} string
+// @Router /auth/reset-email [put]
 func (h *Handler) ResetEmail(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetEmail")
 	defer span.End()
@@ -252,6 +272,16 @@ func (h *Handler) ResetEmail(c echo.Context) error {
 	return c.String(http.StatusOK, "OK")
 }
 
+// @Summary Reset Password
+// @Tags auth
+// @Description Reset password
+// @ID reset-password
+// @Accept json
+// @Produce json
+// @Param password body domain.ResetPasswordRequest true "new password and code"
+// @Success 200 {object} string
+// @Failure 500 {object} string
+// @Router /auth/reset-password [put]
 func (h *Handler) ResetPassword(c echo.Context) error {
 	ctx, span := h.tracer.Start(c.Request().Context(), "auth.ResetPassword")
 	defer span.End()

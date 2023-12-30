@@ -25,6 +25,24 @@ definitions:
     required:
     - title
     type: object
+  domain.ResetEmailRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  domain.ResetPasswordRequest:
+    properties:
+      code:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - code
+    - password
+    type: object
   domain.SignInRequest:
     properties:
       email:
@@ -51,6 +69,18 @@ definitions:
     - password
     - username
     type: object
+  domain.VerificationCode:
+    properties:
+      email:
+        type: string
+      type:
+        enum:
+        - email
+        - password
+        type: string
+    required:
+    - type
+    type: object
 host: localhost:3000
 info:
   contact:
@@ -60,6 +90,87 @@ info:
   title: QuizMaster Backend API
   version: "1.0"
 paths:
+  /auth/reset-email:
+    put:
+      consumes:
+      - application/json
+      description: Reset email
+      operationId: reset-email
+      parameters:
+      - description: code request
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/domain.ResetEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Reset Email
+      tags:
+      - auth
+  /auth/reset-password:
+    put:
+      consumes:
+      - application/json
+      description: Reset password
+      operationId: reset-password
+      parameters:
+      - description: new password and code
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/domain.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Reset Password
+      tags:
+      - auth
+  /auth/send-code:
+    post:
+      consumes:
+      - application/json
+      description: Send Code for reset email or password
+      operationId: send-code
+      parameters:
+      - description: verification code
+        in: body
+        name: code
+        required: true
+        schema:
+          $ref: '#/definitions/domain.VerificationCode'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Send Code
+      tags:
+      - auth
   /auth/signin:
     post:
       consumes:
