@@ -71,7 +71,7 @@ func (repo *Repository) Test(ctx context.Context, quizID int) ([]models.Question
 	questions := make([]models.QuestionWithAnswers, 0)
 
 	rows, err := repo.db.QueryxContext(ctx,
-		`SELECT q.id, q.title, q.image, q.quiz_id, q.type, q.order_id, a.id as answer_id, a.text
+		`SELECT q.id, q.title, q.image, q.quiz_id, q.type, q.order_id, a.id, a.text, a.is_correct, a.question_id, a.order_id
 		FROM questions q
 		LEFT JOIN answers a ON q.id = a.question_id
 		WHERE q.quiz_id = $1
@@ -86,20 +86,27 @@ func (repo *Repository) Test(ctx context.Context, quizID int) ([]models.Question
 
 	for rows.Next() {
 		var q models.QuestionWithAnswers
-		var a models.AnswerInfo
+		a := models.Answer{}
 
 		err := rows.Scan(
 			&q.ID, &q.Title, &q.Image, &q.QuizID, &q.Type, &q.OrderID,
-			&a.ID, &a.Text,
+			&a.ID, &a.Text, &a.IsCorrect, &a.QuestionID, &a.OrderID,
 		)
 		if err != nil {
-			return nil, err
+
 		}
 
 		if existingQuestion, ok := questionMap[q.ID]; ok {
-			existingQuestion.Answers = append(existingQuestion.Answers, a)
+			if a.ID != 0 {
+				existingQuestion.Answers = append(existingQuestion.Answers, a)
+			}
 		} else {
-			q.Answers = []models.AnswerInfo{a}
+			if a.ID != 0 {
+				q.Answers = []models.Answer{a}
+			} else {
+				q.Answers = []models.Answer{}
+			}
+
 			questions = append(questions, q)
 
 			questionMap[q.ID] = &questions[len(questions)-1]
