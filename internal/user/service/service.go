@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/blazee5/quizmaster-backend/internal/domain"
 	"github.com/blazee5/quizmaster-backend/internal/models"
-	"github.com/blazee5/quizmaster-backend/internal/user"
+	userRepo "github.com/blazee5/quizmaster-backend/internal/user"
 	"github.com/blazee5/quizmaster-backend/lib/files"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -15,13 +15,13 @@ import (
 
 type Service struct {
 	log       *zap.SugaredLogger
-	repo      user.Repository
-	redisRepo user.RedisRepository
-	awsRepo   user.AWSRepository
+	repo      userRepo.Repository
+	redisRepo userRepo.RedisRepository
+	awsRepo   userRepo.AWSRepository
 	tracer    trace.Tracer
 }
 
-func NewService(log *zap.SugaredLogger, repo user.Repository, redisRepo user.RedisRepository, awsRepo user.AWSRepository, tracer trace.Tracer) *Service {
+func NewService(log *zap.SugaredLogger, repo userRepo.Repository, redisRepo userRepo.RedisRepository, awsRepo userRepo.AWSRepository, tracer trace.Tracer) *Service {
 	return &Service{log: log, repo: repo, redisRepo: redisRepo, awsRepo: awsRepo, tracer: tracer}
 }
 
@@ -68,6 +68,17 @@ func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *mult
 		return err
 	}
 
+	if avatar != "" {
+		err = s.awsRepo.DeleteFile(ctx, avatar)
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
+			return err
+		}
+	}
+
 	contentType, bytes, avatar, err := files.PrepareImage(fileHeader)
 
 	if err != nil {
@@ -75,14 +86,6 @@ func (s *Service) ChangeAvatar(ctx context.Context, userID int, fileHeader *mult
 		span.SetStatus(codes.Error, err.Error())
 
 		return err
-	}
-
-	if avatar != "" {
-		err = s.awsRepo.DeleteFile(ctx, avatar)
-
-		if err != nil {
-			return err
-		}
 	}
 
 	err = s.awsRepo.SaveFile(ctx, avatar, contentType, bytes)
