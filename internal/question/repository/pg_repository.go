@@ -64,8 +64,8 @@ func (repo *Repository) GetQuestionsByQuizID(ctx context.Context, quizID int) ([
 	return questions, nil
 }
 
-func (repo *Repository) Test(ctx context.Context, quizID int) ([]models.QuestionWithAnswers, error) {
-	ctx, span := repo.tracer.Start(ctx, "questionRepo.Test")
+func (repo *Repository) GetQuestionsAuthor(ctx context.Context, quizID int) ([]models.QuestionWithAnswers, error) {
+	ctx, span := repo.tracer.Start(ctx, "questionRepo.GetQuestionsAuthor")
 	defer span.End()
 
 	questions := make([]models.QuestionWithAnswers, 0)
@@ -75,11 +75,12 @@ func (repo *Repository) Test(ctx context.Context, quizID int) ([]models.Question
 		FROM questions q
 		LEFT JOIN answers a ON q.id = a.question_id
 		WHERE q.quiz_id = $1
-		ORDER BY q.order_id ASC`, quizID)
+		ORDER BY q.order_id, a.order_id ASC`, quizID)
 
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	questionMap := make(map[int]*models.QuestionWithAnswers)
@@ -88,33 +89,25 @@ func (repo *Repository) Test(ctx context.Context, quizID int) ([]models.Question
 		var q models.QuestionWithAnswers
 		a := models.Answer{}
 
-		err := rows.Scan(
+		_ = rows.Scan(
 			&q.ID, &q.Title, &q.Image, &q.QuizID, &q.Type, &q.OrderID,
 			&a.ID, &a.Text, &a.IsCorrect, &a.QuestionID, &a.OrderID,
 		)
-		if err != nil {
-
-		}
 
 		if existingQuestion, ok := questionMap[q.ID]; ok {
 			if a.ID != 0 {
 				existingQuestion.Answers = append(existingQuestion.Answers, a)
 			}
 		} else {
+			q.Answers = []models.Answer{}
+
 			if a.ID != 0 {
 				q.Answers = []models.Answer{a}
-			} else {
-				q.Answers = []models.Answer{}
 			}
 
 			questions = append(questions, q)
-
 			questionMap[q.ID] = &questions[len(questions)-1]
 		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	return questions, nil

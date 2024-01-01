@@ -128,19 +128,21 @@ func (h *Handler) GetQuizQuestions(c echo.Context) error {
 	return c.JSON(http.StatusOK, questions)
 }
 
-func (h *Handler) Test(c echo.Context) error {
-	ctx, span := h.tracer.Start(c.Request().Context(), "question.Test")
+func (h *Handler) GetQuestionsAuthor(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "question.GetQuestionsAuthor")
 	defer span.End()
 
-	id, err := strconv.Atoi(c.Param("id"))
+	userID := c.Get("userID").(int)
+
+	quizID, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": "invalid id",
+			"message": "invalid quiz id",
 		})
 	}
 
-	questions, err := h.service.Test(ctx, id)
+	questions, err := h.service.GetQuestionsAuthor(ctx, quizID, userID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -148,12 +150,14 @@ func (h *Handler) Test(c echo.Context) error {
 		})
 	}
 
+	if errors.Is(err, http_errors.ErrPermissionDenied) {
+		return c.JSON(http.StatusForbidden, echo.Map{
+			"message": "permission denied",
+		})
+	}
+
 	if err != nil {
-		h.log.Infof("error while get questions by quiz id: %s", err)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
+		h.log.Infof("error while get answers by question id: %s", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"message": "server error",
 		})

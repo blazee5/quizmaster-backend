@@ -10,7 +10,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, userID, quizID int) (int, error)
 	GetQuestionsByID(ctx context.Context, id int) ([]models.Question, error)
-	Test(ctx context.Context, id int) ([]models.QuestionWithAnswers, error)
+	GetQuestionsAuthor(ctx context.Context, quizID, userID int) ([]models.QuestionWithAnswers, error)
 	Update(ctx context.Context, id, userID, quizID int, input domain.Question) error
 	Delete(ctx context.Context, id, userID, quizID int) error
 	UploadImage(ctx context.Context, id, userID, quizID int, fileHeader *multipart.FileHeader) error

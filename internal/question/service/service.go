@@ -71,11 +71,11 @@ func (s *Service) GetQuestionsByID(ctx context.Context, id int) ([]models.Questi
 	return questions, nil
 }
 
-func (s *Service) Test(ctx context.Context, id int) ([]models.QuestionWithAnswers, error) {
-	ctx, span := s.tracer.Start(ctx, "questionService.Test")
+func (s *Service) GetQuestionsAuthor(ctx context.Context, quizID, userID int) ([]models.QuestionWithAnswers, error) {
+	ctx, span := s.tracer.Start(ctx, "questionService.GetQuestionsAuthor")
 	defer span.End()
 
-	questions, err := s.repo.Test(ctx, id)
+	quiz, err := s.quizRepo.GetByID(ctx, quizID)
 
 	if err != nil {
 		span.RecordError(err)
@@ -84,7 +84,11 @@ func (s *Service) Test(ctx context.Context, id int) ([]models.QuestionWithAnswer
 		return nil, err
 	}
 
-	return questions, nil
+	if quiz.UserID != userID {
+		return nil, http_errors.ErrPermissionDenied
+	}
+
+	return s.repo.GetQuestionsAuthor(ctx, quizID)
 }
 
 func (s *Service) Update(ctx context.Context, id, userID, quizID int, input domain.Question) error {

@@ -18,10 +18,10 @@ func InitQuestionRoutes(questionGroup *echo.Group, log *zap.SugaredLogger, db *s
 	services := questionService.NewService(log, repos, quizRepos, awsRepos, tracer)
 	handlers := NewHandler(log, services, tracer)
 
-	questionGroup.GET("/test", handlers.Test)
 	questionGroup.POST("", handlers.CreateQuestion)
 	questionGroup.POST("/:questionID/image", handlers.UploadImage)
 	questionGroup.GET("", handlers.GetQuizQuestions)
+	questionGroup.GET("/author", handlers.GetQuestionsAuthor)
 	questionGroup.PUT("/:questionID", handlers.UpdateQuestion)
 	questionGroup.PUT("/order", handlers.ChangeOrder)
 	questionGroup.DELETE("/:questionID", handlers.DeleteQuestion)
