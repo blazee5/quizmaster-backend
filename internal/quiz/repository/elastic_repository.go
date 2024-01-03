@@ -77,8 +77,9 @@ func (repo *ElasticRepository) SearchIndex(ctx context.Context, input, sortBy, s
 						"fuzzy": map[string]any{
 							"title": map[string]any{
 								"value":          input,
-								"fuzziness":      2,
-								"max_expansions": 10,
+								"fuzziness":      "auto",
+								"max_expansions": 50,
+								"boost":          1.5,
 							},
 						},
 					},
