@@ -118,6 +118,21 @@ func (repo *Repository) GetByID(ctx context.Context, userID int) (models.UserInf
 	}, nil
 }
 
+func (repo *Repository) GetByEmail(ctx context.Context, email string) (models.ShortUser, error) {
+	ctx, span := repo.tracer.Start(ctx, "userRepo.GetByEmail")
+	defer span.End()
+
+	var user models.ShortUser
+
+	err := repo.db.QueryRowxContext(ctx, "SELECT id, username, email, avatar FROM users WHERE email = $1", email).StructScan(&user)
+
+	if err != nil {
+		return models.ShortUser{}, err
+	}
+
+	return user, nil
+}
+
 func (repo *Repository) GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error) {
 	ctx, span := repo.tracer.Start(ctx, "userRepo.GetQuizzes")
 	defer span.End()

@@ -180,8 +180,6 @@ func (h *Handler) SendCode(c echo.Context) error {
 
 	var input domain.VerificationCode
 
-	userID := c.Get("userID").(int)
-
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "bad request",
@@ -196,7 +194,13 @@ func (h *Handler) SendCode(c echo.Context) error {
 		})
 	}
 
-	err := h.service.SendCode(ctx, userID, input)
+	err := h.service.SendCode(ctx, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "user not found",
+		})
+	}
 
 	if err != nil {
 		h.log.Infof("error while send code on email: %s", err)

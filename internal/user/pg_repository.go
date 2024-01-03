@@ -8,6 +8,7 @@ import (
 
 type Repository interface {
 	GetByID(ctx context.Context, userID int) (models.UserInfo, error)
+	GetByEmail(ctx context.Context, email string) (models.ShortUser, error)
 	GetAvatarByID(ctx context.Context, userID int) (string, error)
 	GetQuizzes(ctx context.Context, userID int) ([]models.Quiz, error)
 	GetResults(ctx context.Context, userID int) ([]models.Quiz, error)

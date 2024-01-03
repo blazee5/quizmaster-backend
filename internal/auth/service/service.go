@@ -62,11 +62,11 @@ func (s *Service) GenerateToken(ctx context.Context, input domain.SignInRequest)
 	return authLib.GenerateToken(user.ID, user.RoleID)
 }
 
-func (s *Service) SendCode(ctx context.Context, userID int, input domain.VerificationCode) error {
+func (s *Service) SendCode(ctx context.Context, input domain.VerificationCode) error {
 	ctx, span := s.tracer.Start(ctx, "authService.SendCode")
 	defer span.End()
 
-	user, err := s.userRepo.GetByID(ctx, userID)
+	user, err := s.userRepo.GetByEmail(ctx, input.Email)
 
 	if err != nil {
 		span.RecordError(err)
@@ -84,11 +84,7 @@ func (s *Service) SendCode(ctx context.Context, userID int, input domain.Verific
 		return err
 	}
 
-	if input.Email == "" {
-		input.Email = user.User.Email
-	}
-
-	err = s.repo.CreateVerificationCode(ctx, userID, input.Type, code, input.Email)
+	err = s.repo.CreateVerificationCode(ctx, user.ID, input.Type, code, input.Email)
 
 	if err != nil {
 		span.RecordError(err)
@@ -98,12 +94,20 @@ func (s *Service) SendCode(ctx context.Context, userID int, input domain.Verific
 	}
 
 	email := domain.Email{
-		Type:    input.Type,
-		To:      input.Email,
-		Message: code,
+		Type:     input.Type,
+		To:       input.Email,
+		Username: user.Username,
+		Code:     code,
 	}
 
 	bytes, err := json.Marshal(&email)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
 
 	err = s.producer.PublishMessage(ctx, bytes)
 

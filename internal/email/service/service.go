@@ -24,7 +24,7 @@ func (s *Service) SendEmail(msg string) error {
 		return err
 	}
 
-	err = mail.SendMail(email.Type, email.To, email.Message)
+	err = mail.SendMail(email.Type, email.Username, email.To, email.Code)
 
 	if err != nil {
 		s.log.Infof("error while send email: %v", err)

@@ -2,6 +2,7 @@ package mail
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/smtp"
 	"os"
@@ -13,7 +14,7 @@ const (
 	ResetPasswordType     = "password"
 )
 
-func SendMail(emailType, email, code string) error {
+func SendMail(emailType, username, email, code string) error {
 	templates := map[string]string{
 		EmailConfirmationType: "../lib/templates/email-confirm.html",
 		ResetEmailType:        "../lib/templates/reset-email.html",
@@ -26,7 +27,17 @@ func SendMail(emailType, email, code string) error {
 	}
 
 	var body bytes.Buffer
-	if err := t.Execute(&body, map[string]any{"Code": code}); err != nil {
+
+	var link string
+
+	switch emailType {
+	case ResetPasswordType:
+		link = fmt.Sprintf("https://quizer-opal.vercel.app/user/reset/password/%s", code)
+	case ResetEmailType:
+		link = fmt.Sprintf("https://quizer-opal.vercel.app/user/reset/email/%s", code)
+	}
+
+	if err := t.Execute(&body, map[string]any{"Link": link, "Username": username}); err != nil {
 		return err
 	}
 
