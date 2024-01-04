@@ -62,8 +62,67 @@ func (s *Service) GenerateToken(ctx context.Context, input domain.SignInRequest)
 	return authLib.GenerateToken(user.ID, user.RoleID)
 }
 
-func (s *Service) SendCode(ctx context.Context, input domain.VerificationCode) error {
-	ctx, span := s.tracer.Start(ctx, "authService.SendCode")
+func (s *Service) SendEmailCode(ctx context.Context, userID int, input domain.VerificationCode) error {
+	ctx, span := s.tracer.Start(ctx, "authService.SendEmailCode")
+	defer span.End()
+
+	user, err := s.userRepo.GetByID(ctx, userID)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	code := random.GenerateVerificationCode(8)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	err = s.repo.CreateVerificationCode(ctx, user.User.ID, "email", code, input.Email)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	email := domain.Email{
+		Type:     "email",
+		To:       input.Email,
+		Username: user.User.Username,
+		Code:     code,
+	}
+
+	bytes, err := json.Marshal(&email)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	err = s.producer.PublishMessage(ctx, bytes)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) SendPasswordCode(ctx context.Context, input domain.VerificationCode) error {
+	ctx, span := s.tracer.Start(ctx, "authService.SendPasswordCode")
 	defer span.End()
 
 	user, err := s.userRepo.GetByEmail(ctx, input.Email)
@@ -84,7 +143,7 @@ func (s *Service) SendCode(ctx context.Context, input domain.VerificationCode) e
 		return err
 	}
 
-	err = s.repo.CreateVerificationCode(ctx, user.ID, input.Type, code, input.Email)
+	err = s.repo.CreateVerificationCode(ctx, user.ID, "password", code, input.Email)
 
 	if err != nil {
 		span.RecordError(err)
@@ -94,7 +153,7 @@ func (s *Service) SendCode(ctx context.Context, input domain.VerificationCode) e
 	}
 
 	email := domain.Email{
-		Type:     input.Type,
+		Type:     "password",
 		To:       input.Email,
 		Username: user.Username,
 		Code:     code,
@@ -159,7 +218,7 @@ func (s *Service) ResetEmail(ctx context.Context, userID int, input domain.Reset
 	return nil
 }
 
-func (s *Service) ResetPassword(ctx context.Context, userID int, input domain.ResetPasswordRequest) error {
+func (s *Service) ResetPassword(ctx context.Context, input domain.ResetPasswordRequest) error {
 	ctx, span := s.tracer.Start(ctx, "authService.ResetPassword")
 	defer span.End()
 
@@ -178,7 +237,7 @@ func (s *Service) ResetPassword(ctx context.Context, userID int, input domain.Re
 
 	input.Password = authLib.GenerateHashPassword(input.Password)
 
-	err = s.repo.UpdatePassword(ctx, userID, input.Password)
+	err = s.repo.UpdatePassword(ctx, code.UserID, input.Password)
 
 	if err != nil {
 		span.RecordError(err)

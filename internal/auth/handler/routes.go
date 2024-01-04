@@ -24,7 +24,8 @@ func InitAuthRoutes(authGroup *echo.Group, log *zap.SugaredLogger, db *sqlx.DB, 
 	authGroup.POST("/signup", handlers.SignUp)
 	authGroup.POST("/signin", handlers.SignIn)
 	authGroup.POST("/signout", handlers.SignOut, middleware.AuthMiddleware)
-	authGroup.POST("/send-code", handlers.SendCode)
+	authGroup.POST("/send-email-code", handlers.SendEmailCode, middleware.AuthMiddleware)
+	authGroup.POST("/send-password-code", handlers.SendPasswordCode)
 	authGroup.PUT("/reset-email", handlers.ResetEmail, middleware.AuthMiddleware)
-	authGroup.PUT("/reset-password", handlers.ResetPassword, middleware.AuthMiddleware)
+	authGroup.PUT("/reset-password", handlers.ResetPassword)
 }

@@ -164,18 +164,72 @@ func (h *Handler) SignOut(c echo.Context) error {
 	})
 }
 
-// @Summary Send Code
+// @Summary Send Email Code
 // @Tags auth
-// @Description Send Code for reset email or password
+// @Description Send Code for reset email
 // @ID send-code
 // @Accept json
 // @Produce json
 // @Param code body domain.VerificationCode true "verification code"
 // @Success 200 {object} string
 // @Failure 500 {object} string
-// @Router /auth/send-code [post]
-func (h *Handler) SendCode(c echo.Context) error {
-	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SendCode")
+// @Router /auth/send-email-code [post]
+func (h *Handler) SendEmailCode(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SendEmailCode")
+	defer span.End()
+
+	var input domain.VerificationCode
+
+	userID := c.Get("userID").(int)
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "bad request",
+		})
+	}
+
+	if err := c.Validate(&input); err != nil {
+		validateErr := err.(validator.ValidationErrors)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": response.ValidationError(validateErr),
+		})
+	}
+
+	err := h.service.SendEmailCode(ctx, userID, input)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return c.JSON(http.StatusNotFound, echo.Map{
+			"message": "user not found",
+		})
+	}
+
+	if err != nil {
+		h.log.Infof("error while send code on email: %s", err)
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.String(http.StatusOK, "OK")
+}
+
+// @Summary Send Password Code
+// @Tags auth
+// @Description Send Code for reset password
+// @ID send-code
+// @Accept json
+// @Produce json
+// @Param code body domain.VerificationCode true "verification code"
+// @Success 200 {object} string
+// @Failure 500 {object} string
+// @Router /auth/send-password-code [post]
+func (h *Handler) SendPasswordCode(c echo.Context) error {
+	ctx, span := h.tracer.Start(c.Request().Context(), "auth.SendPasswordCode")
 	defer span.End()
 
 	var input domain.VerificationCode
@@ -194,7 +248,7 @@ func (h *Handler) SendCode(c echo.Context) error {
 		})
 	}
 
-	err := h.service.SendCode(ctx, input)
+	err := h.service.SendPasswordCode(ctx, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
@@ -292,8 +346,6 @@ func (h *Handler) ResetPassword(c echo.Context) error {
 
 	var input domain.ResetPasswordRequest
 
-	userID := c.Get("userID").(int)
-
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{
 			"message": "bad request",
@@ -308,7 +360,7 @@ func (h *Handler) ResetPassword(c echo.Context) error {
 		})
 	}
 
-	err := h.service.ResetPassword(ctx, userID, input)
+	err := h.service.ResetPassword(ctx, input)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.JSON(http.StatusNotFound, echo.Map{
