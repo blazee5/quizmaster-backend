@@ -54,32 +54,60 @@ func (mr *MockServiceMockRecorder) GenerateToken(ctx, input any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateToken", reflect.TypeOf((*MockService)(nil).GenerateToken), ctx, input)
 }
 
-// ResetPassword mocks base method.
-func (m *MockService) ResetPassword(ctx context.Context, userID int, input domain.ResetPasswordRequest) error {
+// ResetEmail mocks base method.
+func (m *MockService) ResetEmail(ctx context.Context, userID int, input domain.ResetEmailRequest) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResetPassword", ctx, userID, input)
+	ret := m.ctrl.Call(m, "ResetEmail", ctx, userID, input)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResetEmail indicates an expected call of ResetEmail.
+func (mr *MockServiceMockRecorder) ResetEmail(ctx, userID, input any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetEmail", reflect.TypeOf((*MockService)(nil).ResetEmail), ctx, userID, input)
+}
+
+// ResetPassword mocks base method.
+func (m *MockService) ResetPassword(ctx context.Context, input domain.ResetPasswordRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetPassword", ctx, input)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ResetPassword indicates an expected call of ResetPassword.
-func (mr *MockServiceMockRecorder) ResetPassword(ctx, userID, input any) *gomock.Call {
+func (mr *MockServiceMockRecorder) ResetPassword(ctx, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPassword", reflect.TypeOf((*MockService)(nil).ResetPassword), ctx, userID, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPassword", reflect.TypeOf((*MockService)(nil).ResetPassword), ctx, input)
 }
 
-// SendCode mocks base method.
-func (m *MockService) SendCode(ctx context.Context, userID int, input domain.VerificationCode) error {
+// SendEmailCode mocks base method.
+func (m *MockService) SendEmailCode(ctx context.Context, userID int, input domain.VerificationCode) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendCode", ctx, userID, input)
+	ret := m.ctrl.Call(m, "SendEmailCode", ctx, userID, input)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SendCode indicates an expected call of SendCode.
-func (mr *MockServiceMockRecorder) SendCode(ctx, userID, input any) *gomock.Call {
+// SendEmailCode indicates an expected call of SendEmailCode.
+func (mr *MockServiceMockRecorder) SendEmailCode(ctx, userID, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCode", reflect.TypeOf((*MockService)(nil).SendCode), ctx, userID, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendEmailCode", reflect.TypeOf((*MockService)(nil).SendEmailCode), ctx, userID, input)
+}
+
+// SendPasswordCode mocks base method.
+func (m *MockService) SendPasswordCode(ctx context.Context, input domain.VerificationCode) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendPasswordCode", ctx, input)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendPasswordCode indicates an expected call of SendPasswordCode.
+func (mr *MockServiceMockRecorder) SendPasswordCode(ctx, input any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendPasswordCode", reflect.TypeOf((*MockService)(nil).SendPasswordCode), ctx, input)
 }
 
 // SignUp mocks base method.

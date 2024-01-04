@@ -83,6 +83,21 @@ func (mr *MockRepositoryMockRecorder) GetAvatarByID(ctx, userID any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarByID", reflect.TypeOf((*MockRepository)(nil).GetAvatarByID), ctx, userID)
 }
 
+// GetByEmail mocks base method.
+func (m *MockRepository) GetByEmail(ctx context.Context, email string) (models.ShortUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByEmail", ctx, email)
+	ret0, _ := ret[0].(models.ShortUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByEmail indicates an expected call of GetByEmail.
+func (mr *MockRepositoryMockRecorder) GetByEmail(ctx, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByEmail", reflect.TypeOf((*MockRepository)(nil).GetByEmail), ctx, email)
+}
+
 // GetByID mocks base method.
 func (m *MockRepository) GetByID(ctx context.Context, userID int) (models.UserInfo, error) {
 	m.ctrl.T.Helper()
